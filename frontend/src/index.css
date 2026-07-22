@@ -1,8 +1,112 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@500;600;700;800&family=Saira:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* PWNDORA keyframes definitions */
+@keyframes fogMove {
+  0% { transform: translate3d(-5%, 0, 0) scale(1); }
+  50% { transform: translate3d(5%, 0, 0) scale(1.05); }
+  100% { transform: translate3d(-5%, 0, 0) scale(1); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes glitch1 {
+  0% { clip-path: inset(0 0 90% 0); }
+  10% { clip-path: inset(0 0 10% 0); }
+  20% { clip-path: inset(0 0 85% 0); }
+  30% { clip-path: inset(0 0 20% 0); }
+  40% { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes glitch2 {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, 1px); }
+}
+
+@keyframes glitchPulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.75; }
+}
+
+@keyframes glitchSlice {
+  0% { clip-path: inset(0 0 0 0); }
+  33% { clip-path: inset(10% 0 42% 0); }
+  66% { clip-path: inset(52% 0 8% 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.6; }
+  22% { opacity: 0.85; }
+}
+
+@keyframes rgbDrift {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(1px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 0.2; }
+}
+
+@keyframes codeRain {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes progressGrow {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Atmosphere classes */
+.cyber-grid {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.scanlines {
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 3px);
+  pointer-events: none;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-scroll {
+  animation: scroll 25s linear infinite;
+}
+
+.animate-flicker {
+  animation: flicker 4s infinite;
+}
+
+.animate-pulse-glitch {
+  animation: glitchPulse 3s infinite;
+}
+
+.animate-code-rain {
+  animation: codeRain 4s linear infinite;
+}
 
 :root {
   --background: 220 13% 9%;       /* #0f1216 */
