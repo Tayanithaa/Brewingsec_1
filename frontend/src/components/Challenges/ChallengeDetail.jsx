@@ -4,7 +4,7 @@ export default function ChallengeDetail({ challenge, onBack, onUnlockHint, activ
   if (!challenge) return null;
 
   return (
-    <div className="bg-surface border border-gray-800 rounded-lg p-4 flex flex-col h-full font-mono text-xs">
+    <div className="bg-surface border border-gray-800 rounded-lg p-4 flex flex-col h-full font-mono text-xs glow-border">
       <div className="flex items-center justify-between pb-3 border-b border-gray-800 mb-3">
         <div className="flex items-center space-x-2">
           <button onClick={onBack} className="text-primary hover:underline font-bold mr-1">&lt; BACK</button>

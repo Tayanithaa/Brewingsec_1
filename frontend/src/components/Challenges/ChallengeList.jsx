@@ -22,24 +22,25 @@ export default function ChallengeList({ challenges, onSelectChallenge, completed
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {challenges.map((c) => {
+        {challenges.map((c, idx) => {
           const isDone = completedChallenges.includes(c.id);
           return (
             <div 
               key={c.id}
               onClick={() => onSelectChallenge(c)}
-              className="bg-surface border border-gray-800 rounded-lg p-4 cursor-pointer hover:border-primary hover:shadow-cyber transition-all duration-300 flex flex-col justify-between"
+              className="bg-surface border border-gray-800 rounded-lg p-4 cursor-pointer hover:border-primary hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between glow-border animate-float"
+              style={{ animationDelay: `${idx * 0.4}s` }}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${getDiffColor(c.difficulty)}`}>
                     {c.difficulty}
                   </span>
-                  <span className="text-[10px] font-mono text-textMuted bg-background px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-mono text-textMuted bg-background px-1.5 py-0.5 rounded border border-gray-850">
                     {c.attack_type}
                   </span>
                 </div>
-                <h3 className="font-sans font-semibold text-sm text-textPrimary mb-1 hover:text-primary transition-colors">
+                <h3 className="font-sans font-bold text-sm text-textPrimary mb-1 hover:text-primary transition-colors uppercase tracking-wider glow-text-blue">
                   {c.title}
                 </h3>
                 <p className="text-xs text-textSecondary line-clamp-2 mb-4 font-mono leading-relaxed">
@@ -52,11 +53,11 @@ export default function ChallengeList({ challenges, onSelectChallenge, completed
                   XP Reward: <span className="text-secondary font-bold font-mono">{c.xp_reward} XP</span>
                 </span>
                 {isDone ? (
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                  <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
                     COMPLETE
                   </span>
                 ) : (
-                  <span className="text-[10px] font-mono text-textSecondary bg-background border border-gray-800 px-2 py-0.5 rounded hover:bg-primary hover:text-black transition-colors duration-300">
+                  <span className="text-[10px] font-mono text-textSecondary bg-background border border-gray-800 px-2 py-0.5 rounded hover:bg-primary hover:text-black hover:shadow-cyber transition-all duration-300">
                     START LAB
                   </span>
                 )}

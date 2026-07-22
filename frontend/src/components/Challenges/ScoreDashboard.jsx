@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 export default function ScoreDashboard({ scoreResult }) {
   if (!scoreResult) {
     return (
-      <div className="bg-surface border border-gray-800 rounded-lg p-6 flex flex-col items-center justify-center min-h-[200px] font-mono text-xs">
+      <div className="bg-surface border border-gray-800 rounded-lg p-6 flex flex-col items-center justify-center min-h-[200px] font-mono text-xs glow-border">
         <span className="text-textMuted uppercase tracking-wider">NO SCORING METRICS</span>
         <p className="text-[11px] text-textMuted mt-1 text-center max-w-[200px]">Submit your Sigma rule to calculate challenge scoring metrics.</p>
       </div>
@@ -18,13 +18,13 @@ export default function ScoreDashboard({ scoreResult }) {
   ];
 
   return (
-    <div className="bg-surface border border-gray-800 rounded-lg p-4 flex flex-col h-full font-mono text-xs">
+    <div className="bg-surface border border-gray-800 rounded-lg p-4 flex flex-col h-full font-mono text-xs glow-border">
       <span className="text-textMuted uppercase tracking-wider block mb-3 font-bold text-[10px]">SCORING PERFORMANCE REPORT</span>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="bg-background border border-gray-800 rounded p-3 text-center">
           <span className="text-[10px] text-textMuted uppercase block">Challenge Score</span>
-          <span className={`text-2xl font-bold font-mono block mt-1 ${scoreResult.score >= 70 ? 'text-emerald-400' : 'text-red-400'}`}>
+          <span className={`text-2xl font-bold font-mono block mt-1 ${scoreResult.score >= 70 ? 'text-emerald-400 [text-shadow:0_0_8px_rgba(16,185,129,0.4)]' : 'text-red-400 [text-shadow:0_0_8px_rgba(239,68,68,0.4)]'}`}>
             {scoreResult.score || 0} / 100
           </span>
           <span className="text-[9px] text-textMuted font-mono">
