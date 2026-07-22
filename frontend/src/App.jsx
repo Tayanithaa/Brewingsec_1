@@ -220,15 +220,22 @@ detection:
   };
 
   return (
-    <div className="min-h-screen bg-background text-textPrimary font-sans flex flex-col">
+    <div className="min-h-screen bg-background text-textPrimary font-sans flex flex-col relative overflow-hidden cyber-grid">
+      {/* Volumetric Atmosphere Layer */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="fog-layer absolute inset-0 animate-[fogMove_18s_ease-in-out_infinite] opacity-20 bg-[radial-gradient(closest-side,rgba(0,255,106,0.08),transparent_70%)] blur-[24px]"></div>
+        <div className="fog-layer absolute inset-0 animate-[fogMove_28s_ease-in-out_infinite] opacity-15 bg-[radial-gradient(closest-side,rgba(0,240,255,0.06),transparent_70%)] blur-[28px]" style={{ mixBlendMode: "screen" }}></div>
+        <div className="absolute inset-0 scanlines opacity-30"></div>
+      </div>
+
       {/* HEADER NAVBAR */}
-      <header className="bg-surface border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+      <header className="bg-surface/90 border-b border-gray-800 px-6 py-4 flex items-center justify-between z-10 backdrop-blur-md">
         <div className="flex items-center space-x-3">
-          <div className="bg-primary/10 border border-primary/40 rounded px-2.5 py-1 text-primary font-bold font-mono tracking-widest text-sm shadow-[0_0_10px_rgba(0,255,106,0.15)]">
+          <div className="bg-primary/10 border border-primary/40 rounded px-2.5 py-1 text-primary font-bold font-mono tracking-widest text-sm shadow-[0_0_10px_rgba(0,255,106,0.25)] glow-text">
             PWNDORA // SIGMA LAB
           </div>
           <div className="flex items-center space-x-1.5 bg-background border border-gray-800 rounded px-2.5 py-1">
-            <span className={`w-2 h-2 rounded-full ${useMockMode ? 'bg-yellow-400 animate-pulse' : 'bg-green-500'}`}></span>
+            <span className={`w-2 h-2 rounded-full ${useMockMode ? 'bg-yellow-400 animate-pulse' : 'bg-green-500 shadow-[0_0_8px_rgba(0,255,106,0.6)]'}`}></span>
             <span className="font-mono text-[9px] uppercase tracking-wider text-textSecondary">
               {useMockMode ? 'MOCK MODE' : 'BACKEND CONNECTED'}
             </span>
@@ -239,25 +246,25 @@ detection:
         <nav className="flex items-center space-x-1 text-xs font-mono">
           <button 
             onClick={() => { setActiveTab('landing'); setSelectedChallenge(null); }}
-            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'landing' ? 'text-primary bg-primary/10 font-bold border border-primary/20' : 'text-textSecondary hover:text-textPrimary'}`}
+            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'landing' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             LANDING
           </button>
           <button 
             onClick={() => { setActiveTab('challenges'); setSelectedChallenge(null); }}
-            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'challenges' ? 'text-primary bg-primary/10 font-bold border border-primary/20' : 'text-textSecondary hover:text-textPrimary'}`}
+            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'challenges' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             CHALLENGES
           </button>
           <button 
             onClick={() => { setActiveTab('sandbox'); setSelectedChallenge(null); setRuleText(DEFAULT_SIGMA_RULE); }}
-            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'sandbox' && !selectedChallenge ? 'text-primary bg-primary/10 font-bold border border-primary/20' : 'text-textSecondary hover:text-textPrimary'}`}
+            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'sandbox' && !selectedChallenge ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             SANDBOX
           </button>
           <button 
             onClick={() => { setActiveTab('leaderboard'); setSelectedChallenge(null); }}
-            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'leaderboard' ? 'text-primary bg-primary/10 font-bold border border-primary/20' : 'text-textSecondary hover:text-textPrimary'}`}
+            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'leaderboard' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             LEADERBOARD
           </button>
@@ -275,28 +282,28 @@ detection:
       </header>
 
       {/* CORE WORKSPACE CONTENT */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6 z-10 overflow-y-auto custom-scrollbar">
         
         {/* LANDING TAB */}
         {activeTab === 'landing' && (
-          <div className="max-w-4xl mx-auto space-y-8 py-6">
-            <div className="text-center space-y-3">
-              <h1 className="font-sans font-bold text-3xl md:text-4xl text-textPrimary tracking-tight">
-                PWNDORA Sigma Rule Builder & Validation Engine
+          <div className="max-w-4xl mx-auto space-y-12 py-10 relative">
+            <div className="text-center space-y-4">
+              <h1 className="font-sans font-black text-4xl md:text-5xl text-textPrimary tracking-widest uppercase glow-text mb-4">
+                PWNDORA // <span className="text-primary animate-flicker">SIGMA ENGINE</span>
               </h1>
-              <p className="text-sm text-textSecondary max-w-2xl mx-auto leading-relaxed">
+              <p className="text-sm text-textSecondary max-w-2xl mx-auto leading-relaxed font-mono">
                 Welcome to the first detection engineering module on PWNDORA. Compose, test-run, and score vendor-neutral Sigma rules to identify cyber attacks inside logs.
               </p>
-              <div className="pt-2 flex justify-center space-x-4">
+              <div className="pt-4 flex justify-center space-x-4">
                 <button 
                   onClick={() => setActiveTab('challenges')}
-                  className="bg-primary text-black font-bold text-xs px-6 py-2.5 rounded hover:shadow-cyber transition-all duration-300 active:scale-95"
+                  className="bg-primary text-black font-bold text-xs px-8 py-3 rounded hover:shadow-cyber transition-all duration-300 active:scale-95 border border-primary"
                 >
                   START CHALLENGES
                 </button>
                 <button 
                   onClick={() => { setActiveTab('sandbox'); setSelectedChallenge(null); }}
-                  className="border border-gray-700 hover:border-textSecondary text-textPrimary font-semibold text-xs px-6 py-2.5 rounded transition-all duration-300"
+                  className="border border-gray-700 hover:border-textSecondary text-textPrimary font-semibold text-xs px-8 py-3 rounded hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all duration-300"
                 >
                   OPEN SANDBOX
                 </button>
@@ -305,24 +312,24 @@ detection:
 
             {/* KEY FEATURES GRID */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-              <div className="bg-surface border border-gray-800 rounded-lg p-5 space-y-2">
-                <span className="text-primary text-xl">📝</span>
-                <h3 className="font-sans font-semibold text-sm text-textPrimary">Monaco Rule Editor</h3>
-                <p className="text-xs text-textSecondary leading-relaxed">
+              <div className="bg-surface border border-gray-800 rounded-lg p-6 space-y-3 glow-border hover:scale-[1.02] hover:border-primary transition-all duration-300">
+                <span className="text-primary text-2xl animate-float block">📝</span>
+                <h3 className="font-sans font-bold text-base text-textPrimary uppercase tracking-wider glow-text">Monaco Rule Editor</h3>
+                <p className="text-xs text-textSecondary leading-relaxed font-mono">
                   Compose rules with YAML syntax autocompletion, real-time debounce linting and inline markers.
                 </p>
               </div>
-              <div className="bg-surface border border-gray-800 rounded-lg p-5 space-y-2">
-                <span className="text-secondary text-xl">🔍</span>
-                <h3 className="font-sans font-semibold text-sm text-textPrimary">Live Event Matching</h3>
-                <p className="text-xs text-textSecondary leading-relaxed">
+              <div className="bg-surface border border-gray-800 rounded-lg p-6 space-y-3 glow-border hover:scale-[1.02] hover:border-secondary transition-all duration-300">
+                <span className="text-secondary text-2xl animate-float block" style={{ animationDelay: "1.5s" }}>🔍</span>
+                <h3 className="font-sans font-bold text-base text-textPrimary uppercase tracking-wider glow-text-blue">Live Event Matching</h3>
+                <p className="text-xs text-textSecondary leading-relaxed font-mono">
                   Run pySigma engine server-side to match against Windows, Sysmon, and Web access log datasets.
                 </p>
               </div>
-              <div className="bg-surface border border-gray-800 rounded-lg p-5 space-y-2">
-                <span className="text-yellow-400 text-xl">🏆</span>
-                <h3 className="font-sans font-semibold text-sm text-textPrimary">Scored CTF Challenges</h3>
-                <p className="text-xs text-textSecondary leading-relaxed">
+              <div className="bg-surface border border-gray-800 rounded-lg p-6 space-y-3 glow-border hover:scale-[1.02] hover:border-yellow-400 transition-all duration-300">
+                <span className="text-yellow-400 text-2xl animate-float block" style={{ animationDelay: "3s" }}>🏆</span>
+                <h3 className="font-sans font-bold text-base text-textPrimary uppercase tracking-wider [text-shadow:0_0_8px_rgba(250,204,21,0.3)]">Scored Challenges</h3>
+                <p className="text-xs text-textSecondary leading-relaxed font-mono">
                   Attempt 5 challenges matching threat signatures, scored live on precision, recall, and false-positive rates.
                 </p>
               </div>
