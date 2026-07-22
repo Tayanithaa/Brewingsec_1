@@ -125,25 +125,26 @@ const mockChallenges = [
 ];
 
 // Mock database logs to evaluate against
+// Mock database logs to evaluate against
 const mockLogs = {
   windows_security: [
-    { EventID: 4624, LogonType: 3, AuthenticationPackageName: "NtLmSsp", WorkstationName: "WIN-SRV-AD", IpAddress: "10.0.0.15", SubjectUserName: "Administrator", malicious: true, attack_type: "T1550.002", description: "Successful logon using NTLM NtLmSsp package from unexpected network location" },
-    { EventID: 4624, LogonType: 2, AuthenticationPackageName: "Negotiate", WorkstationName: "WKS-DEV-03", IpAddress: "127.0.0.1", SubjectUserName: "developer1", malicious: false, description: "Normal interactive user logon" },
-    { EventID: 4698, TaskName: "\\Microsoft\\Windows\\UpdateTask", TaskContent: "powershell.exe -enc SQBmA... (Encoded download cradle)", SubjectUserName: "svc_backup", malicious: true, attack_type: "T1053.005", description: "New Scheduled Task created executing suspicious Base64 encoded PowerShell" },
-    { EventID: 4698, TaskName: "\\Microsoft\\Windows\\TimeSync", TaskContent: "w32tm.exe /resync", SubjectUserName: "SYSTEM", malicious: false, description: "Standard time synchronization scheduled task" },
-    { EventID: 4625, LogonType: 3, FailureReason: "0xC000006D", WorkstationName: "WIN-SRV-AD", IpAddress: "192.168.1.100", SubjectUserName: "guest", malicious: false, description: "Failed network logon attempt" }
+    { EventID: 4624, TimeCreated: "2026-07-25T08:01:00Z", Computer: "WKS-FIN-014", SubjectUserName: "ANONYMOUS LOGON", TargetUserName: "jdoe", LogonType: 3, AuthenticationPackageName: "NTLM", LogonProcessName: "NtLmSsp", WorkstationName: "WKS-FIN-014", malicious: true, attack_type: "T1550.002", description: "Successful logon using NTLM NtLmSsp package from unexpected network location" },
+    { EventID: 4624, TimeCreated: "2026-07-25T08:02:00Z", Computer: "WKS-HR-002", SubjectUserName: "jdoe", TargetUserName: "priya.k", LogonType: 2, AuthenticationPackageName: "Kerberos", LogonProcessName: "Kerberos", WorkstationName: "WKS-HR-002", malicious: false, description: "Normal interactive user logon" },
+    { EventID: 4698, TimeCreated: "2026-07-25T08:03:00Z", Computer: "WKS-SALES-009", SubjectUserName: "svc_backup", TaskName: "\\Microsoft\\WindowsUpdate\\Refresh", TaskContent: "powershell.exe -enc UwB0AGEAcgB0AC0A...", malicious: true, attack_type: "T1053.005", description: "New Scheduled Task created executing suspicious Base64 encoded PowerShell" },
+    { EventID: 4698, TimeCreated: "2026-07-25T08:04:00Z", Computer: "WKS-FIN-014", SubjectUserName: "svc_backup", TaskName: "\\Microsoft\\Windows\\DiskCleanup\\SilentCleanup", TaskContent: "cleanmgr.exe /sagerun:1", malicious: false, description: "Standard disk cleanup scheduled task" },
+    { EventID: 4625, TimeCreated: "2026-07-25T08:05:00Z", Computer: "SRV-DC-01", SubjectUserName: "svc_sql", TargetUserName: "svc_sql", LogonType: 3, FailureReason: "%%2313", malicious: false, description: "Failed network logon attempt" }
   ],
   sysmon: [
-    { EventID: 10, SourceImage: "C:\\Temp\\mimikatz.exe", TargetImage: "C:\\Windows\\System32\\lsass.exe", GrantedAccess: "0x1010", CallTrace: "unknown", malicious: true, attack_type: "T1003.001", description: "Mimikatz requesting LSASS memory dump via 0x1010 access rights" },
-    { EventID: 10, SourceImage: "C:\\Program Files\\Windows Defender\\MsMpEng.exe", TargetImage: "C:\\Windows\\System32\\lsass.exe", GrantedAccess: "0x1400", CallTrace: "kernel32.dll", malicious: false, description: "Legitimate anti-malware process inspecting LSASS" },
-    { EventID: 1, Image: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", CommandLine: "powershell.exe -enc SQB4AGUA... -nop -w hidden", ParentImage: "C:\\Windows\\explorer.exe", malicious: true, attack_type: "T1059.001", description: "PowerShell process spawned with base64 encoded payload and stealth flags" },
-    { EventID: 1, Image: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", CommandLine: "powershell.exe Get-Date", ParentImage: "C:\\Windows\\System32\\cmd.exe", malicious: false, description: "Normal execution of PowerShell command line utility" }
+    { EventID: 10, TimeCreated: "2026-07-25T08:01:00Z", Computer: "WKS-FIN-014", SourceImage: "C:\\Users\\Public\\update.exe", TargetImage: "C:\\Windows\\System32\\lsass.exe", GrantedAccess: "0x1010", CallTrace: "C:\\Windows\\SYSTEM32\\ntdll.dll+9d9b4", malicious: true, attack_type: "T1003.001", description: "Mimikatz requesting LSASS memory dump via 0x1010 access rights" },
+    { EventID: 10, TimeCreated: "2026-07-25T08:02:00Z", Computer: "WKS-HR-002", SourceImage: "C:\\Program Files\\CrowdStrike\\CSFalconService.exe", TargetImage: "C:\\Windows\\System32\\lsass.exe", GrantedAccess: "0x1400", CallTrace: "C:\\Windows\\SYSTEM32\\ntdll.dll+a2c14", malicious: false, description: "Legitimate anti-malware process inspecting LSASS" },
+    { EventID: 1, TimeCreated: "2026-07-25T08:03:00Z", Computer: "SRV-DC-01", Image: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", CommandLine: "powershell.exe -enc SQBuAHYAbwBrAGUALQBFAHgAcAByAGUAcwBzAGkAbwBuAA==", ParentImage: "C:\\Windows\\explorer.exe", User: "jdoe", malicious: true, attack_type: "T1059.001", description: "PowerShell process spawned with base64 encoded payload and stealth flags" },
+    { EventID: 1, TimeCreated: "2026-07-25T08:04:00Z", Computer: "WKS-ENG-118", Image: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", CommandLine: "powershell.exe -Command Get-Process", ParentImage: "C:\\Windows\\explorer.exe", User: "svc_backup", malicious: false, description: "Normal execution of PowerShell command line utility" }
   ],
   web_access: [
-    { method: "GET", path: "/index.php", "cs-uri-query": "id=1%20UNION%20SELECT%20username,%20password%20FROM%20users", status: 200, ip: "192.168.4.52", user_agent: "sqlmap/1.8.2", malicious: true, attack_type: "T1190", description: "Web access request attempting classic SQL Injection union query" },
-    { method: "GET", path: "/login.php", "cs-uri-query": "user=admin'%20OR%20'1'='1", status: 200, ip: "192.168.4.52", user_agent: "Mozilla/5.0", malicious: true, attack_type: "T1190", description: "Web access request attempting SQL Injection authentication bypass" },
-    { method: "POST", path: "/api/login", "cs-uri-query": "", status: 200, ip: "10.0.2.14", user_agent: "Mozilla/5.0", malicious: false, description: "Standard successful authentication POST request" },
-    { method: "GET", path: "/css/bootstrap.min.css", "cs-uri-query": "v=4.6", status: 304, ip: "10.0.2.14", user_agent: "Mozilla/5.0", malicious: false, description: "Static resource fetch" }
+    { IP: "185.220.101.9", TimeCreated: "2026-07-25T08:01:00Z", Method: "GET", URI: "/products?id=1' UNION SELECT username,password FROM users--", StatusCode: 200, UserAgent: "python-requests/2.31.0", malicious: true, attack_type: "T1190", description: "Web access request attempting classic SQL Injection union query" },
+    { IP: "185.220.101.12", TimeCreated: "2026-07-25T08:02:00Z", Method: "GET", URI: "/search?q=test' OR 1=1--", StatusCode: 200, UserAgent: "sqlmap/1.7#stable", malicious: true, attack_type: "T1190", description: "Web access request attempting SQL Injection authentication bypass" },
+    { IP: "10.0.2.14", TimeCreated: "2026-07-25T08:03:00Z", Method: "POST", URI: "/api/login", StatusCode: 200, UserAgent: "Mozilla/5.0", malicious: false, description: "Standard successful authentication POST request" },
+    { IP: "10.0.1.5", TimeCreated: "2026-07-25T08:04:00Z", Method: "GET", URI: "/static/logo.png", StatusCode: 304, UserAgent: "Mozilla/5.0", malicious: false, description: "Static resource fetch" }
   ]
 };
 
@@ -249,7 +250,8 @@ export const runRule = async (ruleText, datasetId) => {
       if (datasetId === "windows_security") {
         const check4624 = ruleText.includes("4624") && log.EventID === 4624;
         const checkLogonType = (ruleText.includes("LogonType: 3") && log.LogonType === 3) || (ruleText.includes("LogonType: 9") && log.LogonType === 9);
-        const checkNtLm = ruleText.toLowerCase().includes("ntlmssp") && log.AuthenticationPackageName === "NtLmSsp";
+        const checkNtLm = (ruleText.toLowerCase().includes("ntlmssp") && log.LogonProcessName === "NtLmSsp") || 
+                           (ruleText.toLowerCase().includes("ntlm") && log.AuthenticationPackageName === "NTLM");
         const check4698 = ruleText.includes("4698") && log.EventID === 4698;
         const checkPowerShell = ruleText.toLowerCase().includes("powershell") && log.TaskContent && log.TaskContent.toLowerCase().includes("powershell");
 
@@ -272,9 +274,9 @@ export const runRule = async (ruleText, datasetId) => {
         else if (check1 && checkPowerShell && !ruleText.includes("-enc")) isMatch = true;
       } 
       else if (datasetId === "web_access") {
-        const checkUnion = ruleText.toLowerCase().includes("union select") && log["cs-uri-query"] && log["cs-uri-query"].toLowerCase().includes("union select");
-        const checkOr = ruleText.toLowerCase().includes("or 1=1") && log["cs-uri-query"] && log["cs-uri-query"].toLowerCase().includes("or 1=1");
-        const checkComment = ruleText.toLowerCase().includes("--") && log["cs-uri-query"] && log["cs-uri-query"].includes("--");
+        const checkUnion = (ruleText.toLowerCase().includes("union select") || ruleText.toLowerCase().includes("union")) && log.URI && log.URI.toLowerCase().includes("union select");
+        const checkOr = ruleText.toLowerCase().includes("or 1=1") && log.URI && log.URI.toLowerCase().includes("or 1=1");
+        const checkComment = ruleText.toLowerCase().includes("--") && log.URI && log.URI.includes("--");
 
         if (checkUnion || checkOr || checkComment) isMatch = true;
       }
@@ -293,7 +295,10 @@ export const runRule = async (ruleText, datasetId) => {
           if (ruleText.includes("GrantedAccess")) matchedFields.push("GrantedAccess");
           if (ruleText.includes("CommandLine")) matchedFields.push("CommandLine");
         } else if (datasetId === "web_access") {
-          if (ruleText.includes("cs-uri-query")) matchedFields.push("cs-uri-query");
+          if (ruleText.includes("cs-uri-query")) matchedFields.push("URI");
+          if (ruleText.includes("c-uri")) matchedFields.push("URI");
+          if (ruleText.includes("URI")) matchedFields.push("URI");
+          if (ruleText.includes("Method")) matchedFields.push("Method");
         }
 
         matchedEntries.push({
