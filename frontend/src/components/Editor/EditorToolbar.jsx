@@ -2,11 +2,11 @@ import React from 'react';
 
 export default function EditorToolbar({ onRun, onValidate, onTranspile, targets, selectedTarget, onTargetChange, isRunning }) {
   return (
-    <div className="flex flex-wrap items-center justify-between bg-surface border border-gray-800 rounded-lg p-3 gap-3">
+    <div className="flex flex-wrap items-center justify-between bg-surface border border-gray-800 rounded-lg p-3 gap-3 glow-border">
       <div className="flex items-center space-x-2">
         <button
           onClick={onValidate}
-          className="bg-transparent hover:bg-emerald-500/10 text-primary border border-primary hover:shadow-cyber text-xs font-semibold px-3 py-1.5 rounded transition-all duration-300"
+          className="bg-transparent hover:bg-emerald-500/10 text-primary border border-primary/50 hover:border-primary hover:shadow-cyber text-xs font-semibold px-3 py-1.5 rounded transition-all duration-300"
         >
           VALIDATE
         </button>
@@ -31,7 +31,7 @@ export default function EditorToolbar({ onRun, onValidate, onTranspile, targets,
         </select>
         <button
           onClick={onTranspile}
-          className="bg-transparent hover:bg-secondary/10 text-secondary border border-secondary text-xs font-semibold px-3 py-1.5 rounded transition-all duration-300"
+          className="bg-transparent hover:bg-secondary/10 text-secondary border border-secondary/50 hover:border-secondary hover:shadow-[0_0_15px_rgba(0,240,255,0.25)] text-xs font-semibold px-3 py-1.5 rounded transition-all duration-300"
         >
           CONVERT
         </button>

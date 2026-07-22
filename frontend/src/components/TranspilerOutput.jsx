@@ -10,7 +10,7 @@ export default function TranspilerOutput({ query, targetName }) {
   };
 
   return (
-    <div className="bg-surface border border-gray-800 rounded-lg p-4 flex flex-col font-mono text-xs">
+    <div className="bg-surface border border-gray-800 rounded-lg p-4 flex flex-col font-mono text-xs glow-border">
       <div className="flex items-center justify-between pb-2 border-b border-gray-800 mb-2">
         <span className="text-secondary font-bold uppercase tracking-wider text-[10px]">
           TRANSPILER OUTPUT ({targetName})

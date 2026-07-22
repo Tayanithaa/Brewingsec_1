@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function DatasetPicker({ datasets, selectedDataset, onDatasetChange }) {
   return (
-    <div className="flex flex-col bg-surface border border-gray-800 rounded-lg p-4 font-mono text-xs">
+    <div className="flex flex-col bg-surface border border-gray-800 rounded-lg p-4 font-mono text-xs glow-border">
       <span className="text-textSecondary uppercase font-bold text-[10px] block mb-2">TARGET LOG DATASET</span>
       <select
         value={selectedDataset}

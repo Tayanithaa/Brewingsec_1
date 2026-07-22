@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function MonacoEditor({ rule, onChange, errors }) {
   return (
-    <div className="flex flex-col h-full bg-[#0a1410e6] rounded-lg border border-emerald-400/25 p-4 focus-within:shadow-cyber transition-all duration-300">
+    <div className="flex flex-col h-full bg-[#0a1410e6] rounded-lg border border-emerald-400/25 p-4 focus-within:shadow-cyber focus-within:border-primary glow-border transition-all duration-300">
       <div className="flex items-center justify-between pb-2 border-b border-gray-800 mb-2">
         <span className="font-mono text-xs text-emerald-400 font-semibold tracking-wider">SIGMA_RULE.YAML</span>
         <div className="flex space-x-1.5">
