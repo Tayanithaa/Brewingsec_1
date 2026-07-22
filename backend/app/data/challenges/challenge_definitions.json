@@ -1,0 +1,74 @@
+{
+  "challenges": [
+    {
+      "id": "ch_001",
+      "title": "Pass-the-Hash Detection",
+      "difficulty": "Silver",
+      "dataset": "windows_security",
+      "attack_type": "T1550.002",
+      "hints": [
+        "Focus on EventID 4624",
+        "LogonType 3 or 9 = Network logon",
+        "Check AuthenticationPackageName for NTLM without Kerberos"
+      ],
+      "max_score": 100,
+      "xp_reward": 200
+    },
+    {
+      "id": "ch_002",
+      "title": "Scheduled Task Creation",
+      "difficulty": "Bronze",
+      "dataset": "windows_security",
+      "attack_type": "T1053.005",
+      "hints": [
+        "Focus on EventID 4698",
+        "Look at TaskContent for encoded PowerShell",
+        "Routine tasks don't reference powershell -enc"
+      ],
+      "max_score": 100,
+      "xp_reward": 150
+    },
+    {
+      "id": "ch_003",
+      "title": "LSASS Access (Credential Dumping)",
+      "difficulty": "Gold",
+      "dataset": "sysmon",
+      "attack_type": "T1003.001",
+      "hints": [
+        "Focus on Sysmon EventID 10",
+        "TargetImage must be lsass.exe",
+        "GrantedAccess 0x1010 is the classic Mimikatz signature"
+      ],
+      "max_score": 100,
+      "xp_reward": 250
+    },
+    {
+      "id": "ch_004",
+      "title": "Encoded PowerShell",
+      "difficulty": "Silver",
+      "dataset": "sysmon",
+      "attack_type": "T1059.001",
+      "hints": [
+        "Focus on Sysmon EventID 1",
+        "Check CommandLine field",
+        "Look for -enc or -EncodedCommand flags"
+      ],
+      "max_score": 100,
+      "xp_reward": 200
+    },
+    {
+      "id": "ch_005",
+      "title": "SQL Injection",
+      "difficulty": "Bronze",
+      "dataset": "web_access",
+      "attack_type": "T1190",
+      "hints": [
+        "Check the URI/query string field",
+        "Look for UNION SELECT or OR 1=1 patterns",
+        "SQL comment sequences (--) are a strong signal"
+      ],
+      "max_score": 100,
+      "xp_reward": 150
+    }
+  ]
+}
