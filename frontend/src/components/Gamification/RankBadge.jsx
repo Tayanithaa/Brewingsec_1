@@ -12,8 +12,8 @@ export default function RankBadge({ xp }) {
   const rank = getRank(xp);
 
   return (
-    <div className="bg-surface border border-gray-800 rounded-lg p-4 font-mono text-xs flex items-center space-x-3.5">
-      <div className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center font-bold text-sm tracking-tighter ${rank.color}`}>
+    <div className="bg-surface border border-gray-800 rounded-lg p-4 font-mono text-xs flex items-center space-x-3.5 glow-border">
+      <div className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center font-bold text-sm tracking-tighter animate-float ${rank.color} shadow-[0_0_10px_rgba(0,240,255,0.2)]`}>
         {rank.tag}
       </div>
       <div>

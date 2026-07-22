@@ -4,7 +4,7 @@ export default function XPBar({ xp, nextMilestone }) {
   const progressPercent = Math.min(100, Math.round((xp / nextMilestone) * 100));
 
   return (
-    <div className="bg-surface border border-gray-800 rounded-lg p-4 font-mono text-xs">
+    <div className="bg-surface border border-gray-800 rounded-lg p-4 font-mono text-xs glow-border">
       <div className="flex justify-between items-center mb-1.5">
         <span className="text-textSecondary uppercase font-bold text-[10px]">XP PROGRESS TRACKER</span>
         <span className="text-secondary font-bold font-mono">{xp} / {nextMilestone} XP</span>

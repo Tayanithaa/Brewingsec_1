@@ -18,7 +18,7 @@ export default function Leaderboard({ currentUserXp }) {
   const sortedCompetitors = [...competitors].sort((a, b) => b.xp - a.xp);
 
   return (
-    <div className="bg-surface border border-gray-800 rounded-lg p-4 font-mono text-xs flex flex-col h-full">
+    <div className="bg-surface border border-gray-800 rounded-lg p-4 font-mono text-xs flex flex-col h-full glow-border">
       <span className="text-textSecondary uppercase font-bold text-[10px] block mb-3 pb-2 border-b border-gray-800">
         WEEKLY LEADERBOARD (XP SHARDS)
       </span>
@@ -27,7 +27,7 @@ export default function Leaderboard({ currentUserXp }) {
         {sortedCompetitors.map((c, idx) => (
           <div 
             key={idx}
-            className={`flex items-center justify-between p-2 rounded transition-colors ${c.isSelf ? 'bg-primary/10 border border-primary/20 text-primary' : 'bg-background/40 hover:bg-background/80 border border-transparent'}`}
+            className={`flex items-center justify-between p-2 rounded transition-colors ${c.isSelf ? 'bg-primary/10 border border-primary/30 text-primary shadow-[0_0_8px_rgba(0,255,106,0.15)] glow-text' : 'bg-background/40 hover:bg-background/80 border border-transparent'}`}
           >
             <div className="flex items-center space-x-3">
               <span className={`w-5 text-center font-bold font-mono ${idx === 0 ? 'text-yellow-400' : idx === 1 ? 'text-gray-300' : idx === 2 ? 'text-amber-600' : 'text-textMuted'}`}>
