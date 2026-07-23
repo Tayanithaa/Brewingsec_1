@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    # No healthcheck override here on purpose — the backend Dockerfile
+    # already declares a working one using Python's urllib (curl is not
+    # installed in the python:3.12-slim base image, so a curl-based
+    # healthcheck here would always fail and permanently block frontend
+    # from starting, since it depends on backend being healthy below).
+  frontend:
+    build: ./frontend
+    ports: ["3000:80"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://localhost:8000
