@@ -74,41 +74,39 @@ protected:
 
 ## 4. What's still open (unowned — needs triage)
 
-- **`docker-compose up --build` was not verified in this environment.** Docker Desktop could
-  not be started headlessly in this sandbox (no daemon connection after launch). Everything
-  it would exercise was instead verified by running the backend directly with `uvicorn` and
-  the frontend directly with `vite dev`, pointed at each other — all functional checks passed
-  this way, but the literal one-command clean-clone launch still needs to be run on a machine
-  with a working Docker daemon before submission.
-- **`/explain-rule` is entirely unimplemented.** No route exists in `main.py` or any router
-  file; confirmed by a live request returning 404. This was the ONLY place the spec allows an
-  LLM call, and it's currently missing outright — it was in the "bonus, build after core is
-  stable" tier, not the never-cut list, but the build spec didn't call it out on the cut list
-  either, so treat this as an open decision, not a resolved cut.
-- **No `verify_scores.py` (or equivalent) exists anywhere in the repo**, on any branch. The
-  build spec requires every reference rule to pass a documented 3-part check (exact match,
-  weak-rule penalty, narrow-rule penalty) before being trusted for scoring. That check was
-  reproduced manually in this session and passed, but there's no script a judge (or teammate)
-  can re-run to confirm it — this should be written and committed, at
-  `backend/app/verify_scores.py` or similar.
-- **`README.md`, `ARCHITECTURE.md`, and `PWNDORA_INTEGRATION.md` don't exist on `Master`**,
-  but substantially complete versions of all three **already exist on the `frontend`
-  branch** (commit `02dc6bd`), including the exact required README header line
-  (`Track: T-05 | PS: BSCDS26-SODE-01`) and a Mermaid architecture diagram. These should be
-  reviewed and ported/reconciled against Master's actual current state, not written from
-  scratch — see the branch reconciliation report for details.
+**Resolved since the first pass:**
+- `verify_scores.py` now exists at `backend/app/verify_scores.py`, runs against any already-
+  running server via `API_URL`, and passes all 3 parts of the reference-rule check.
+- `README.md`, `ARCHITECTURE.md`, and `PWNDORA_INTEGRATION.md` are now committed at repo root,
+  ported from the `frontend` branch's doc-only commit and corrected to match current reality
+  (accurate `/explain-rule`/`/transpile-rule` status, correct rate-limit numbers, correct
+  dataset event IDs, honest in-memory-vs-PWNDORA-DB framing for progress sync).
+- The mojibake bug in challenge hints is fixed at the root cause: `data_store.py` was opening
+  the JSON files with Python's platform-default encoding (not UTF-8) on Windows, silently
+  mis-decoding the em-dash bytes. Fixed by opening with `encoding="utf-8"` explicitly.
+- `Master` has been merged into `main` (fast-forward) and pushed; `main` was already GitHub's
+  default branch and now contains everything. `backend`, `frontend`, and `Master` are queued
+  for deletion pending explicit go-ahead (their unique value — the three docs — is now safely
+  ported; see the branch reconciliation notes).
+
+**Still open:**
+- **`docker-compose up --build` still hasn't been verified through the actual container path
+  in this sandbox.** Docker Desktop's own processes start and then exit/crash rather than the
+  engine coming up — a real environment limitation, not a timing issue (confirmed by waiting
+  and retrying). Everything the containerized stack would exercise was instead verified by
+  running the backend directly with `uvicorn` and the frontend directly with `vite dev`,
+  pointed at each other — all functional checks passed this way, including the full
+  challenge-submit flow — but the literal one-command clean-clone launch through Docker itself
+  needs to be run by someone with a working Docker daemon before submission.
+- **`/explain-rule` is still entirely unimplemented.** No route exists in `main.py` or any
+  router file; confirmed by a live request returning 404. This was the ONLY place the spec
+  allows an LLM call. It was in the "bonus, build after core is stable" tier, not the
+  never-cut list, so this is an open decision (build it, or explicitly move it to the cut
+  list), not a resolved cut either way.
 - **The `frontend` branch's `sigma.js` still contains a full client-side mock evaluation
-  engine** (`USE_MOCK` flag, `mockLogs`, in-browser rule matching). If any content is cherry-
-  picked from that branch's later commits (visual polish, docs), this file specifically must
-  not be merged as-is — it would reintroduce the exact violation the build spec calls out
-  ("No cached, pre-loaded, or simulated results anywhere... never do it in browser JS").
-- **Branch consolidation itself is undecided** — Master, main, backend, and frontend all
-  diverged from the same initial commit and were never merged back together. See the Task 2
-  branch reconciliation report for what's unique to each.
-- **Minor data bug**: challenge hints (e.g. ch_001's hint text) contain garbled em-dash
-  characters (`Ã¢â‚¬...`), consistent with a UTF-8 string having been
-  decoded as Latin-1 somewhere in `challenge_definitions.json` or its generation script. Not
-  functionally breaking, but visible to judges in the Sandbox UI.
+  engine** (`USE_MOCK` flag, `mockLogs`, in-browser rule matching). This branch is queued for
+  deletion (see above) and only its doc files were ever ported — this is a reminder of why, not
+  an active risk, as long as the branch is deleted rather than merged wholesale.
 - **CORS is currently wide open** (`allow_origins=["*"]`) in `main.py`, flagged in-code as
   needing tightening before real PWNDORA production use — fine for a hackathon demo, worth
   flagging so it isn't forgotten.
