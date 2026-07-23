@@ -19,16 +19,16 @@ def load_all():
     global _datasets, _challenge_definitions, _reference_rules, _challenge_by_id
 
     for path in (DATA_DIR / "datasets").glob("*.json"):
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             _datasets[path.stem] = json.load(f)["entries"]
 
-    with open(DATA_DIR / "challenges" / "challenge_definitions.json") as f:
+    with open(DATA_DIR / "challenges" / "challenge_definitions.json", encoding="utf-8") as f:
         _challenge_definitions = json.load(f)["challenges"]
         _challenge_by_id = {c["id"]: c for c in _challenge_definitions}
 
     # reference_rules.json is loaded but NEVER exposed via any router response —
     # only used internally by the /submit scoring path.
-    with open(DATA_DIR / "challenges" / "reference_rules.json") as f:
+    with open(DATA_DIR / "challenges" / "reference_rules.json", encoding="utf-8") as f:
         _reference_rules = json.load(f)
 
 
