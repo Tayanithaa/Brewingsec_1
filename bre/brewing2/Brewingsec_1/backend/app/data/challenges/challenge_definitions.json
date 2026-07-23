@@ -1,0 +1,74 @@
+{
+  "challenges": [
+    {
+      "id": "ch_001",
+      "title": "Pass-the-Hash Detection",
+      "difficulty": "Silver",
+      "dataset": "windows_security",
+      "attack_type": "T1550.002",
+      "hints": [
+        "Windows Event ID 4624 records every successful logon — the technique lives in the auth method and logon type, not the event ID alone.",
+        "Pass-the-Hash relies on NTLM instead of Kerberos, and typically arrives over the network rather than an interactive session.",
+        "Not every NTLM network logon in this dataset is an attack — there are at least two distinct legitimate reasons (e.g., legacy infrastructure and maintenance accounts). A rule that only checks the technique signature will over-match; you need a compound condition to carve out both known-legitimate cases."
+      ],
+      "max_score": 100,
+      "xp_reward": 200
+    },
+    {
+      "id": "ch_002",
+      "title": "Scheduled Task Creation",
+      "difficulty": "Bronze",
+      "dataset": "windows_security",
+      "attack_type": "T1053.005",
+      "hints": [
+        "EventID 4698 fires on every scheduled task creation, legitimate or not — task creation itself is not the signal.",
+        "Attackers use scheduled tasks as a persistence mechanism, often to run something they would rather not type directly into a visible command line.",
+        "Look at what the task actually runs. Beware: there are multiple legitimate tasks that also use command-line encoding or LOLBins. You must filter out at least two independent legitimate tasks."
+      ],
+      "max_score": 100,
+      "xp_reward": 150
+    },
+    {
+      "id": "ch_003",
+      "title": "LSASS Access (Credential Dumping)",
+      "difficulty": "Gold",
+      "dataset": "sysmon",
+      "attack_type": "T1003.001",
+      "hints": [
+        "Credential dumping tools need to read protected memory from a specific, well-known Windows process.",
+        "Sysmon logs process-to-process memory access with a numeric access-rights code. The value used by classic dumping tools is well documented.",
+        "Some legitimate administrative and security tools also request that same access right. You will need to filter out multiple legitimate tools to avoid false positives."
+      ],
+      "max_score": 100,
+      "xp_reward": 250
+    },
+    {
+      "id": "ch_004",
+      "title": "Encoded PowerShell",
+      "difficulty": "Silver",
+      "dataset": "sysmon",
+      "attack_type": "T1059.001",
+      "hints": [
+        "Attackers obfuscate PowerShell payloads to avoid simple keyword-based detection and to bypass casual log review.",
+        "PowerShell itself has a native command-line switch for accepting a payload in this obfuscated form — that switch is the signal, not the presence of powershell.exe itself.",
+        "Both attackers and legitimate automation (like endpoint management or admin scripts) use encoded PowerShell. You'll need to explicitly filter out multiple legitimate sources."
+      ],
+      "max_score": 100,
+      "xp_reward": 200
+    },
+    {
+      "id": "ch_005",
+      "title": "SQL Injection",
+      "difficulty": "Bronze",
+      "dataset": "web_access",
+      "attack_type": "T1190",
+      "hints": [
+        "Think about what a web request looks like when someone is trying to make the backend database do something it should not.",
+        "Classic SQL injection payloads combine several recognizable fragments — a boolean tautology, a UNION-based data exfiltration attempt, or a comment sequence used to truncate the rest of a query.",
+        "Vulnerability scanners and some internal tools also send similar patterns for testing or authorized use. Filter out both independent sources of benign noise."
+      ],
+      "max_score": 100,
+      "xp_reward": 150
+    }
+  ]
+}
