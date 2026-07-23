@@ -1,6 +1,6 @@
-version: '3.8'
 services:
   backend:
+    image: brewingsec-backend
     build: ./backend
     ports: ["8000:8000"]
     # No healthcheck override here on purpose — the backend Dockerfile
@@ -9,6 +9,7 @@ services:
     # healthcheck here would always fail and permanently block frontend
     # from starting, since it depends on backend being healthy below).
   frontend:
+    image: brewingsec-frontend
     build: ./frontend
     ports: ["3000:80"]
     depends_on:
