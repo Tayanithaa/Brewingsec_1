@@ -26,16 +26,20 @@ class ScoreResult:
         return asdict(self)
 
 
+def is_target_malicious(entry: dict, attack_type: str) -> bool:
+    """True if entry is malicious AND belongs to the given attack_type, since a
+    dataset can hold malicious entries for more than one challenge (e.g.
+    windows_security serves 2 challenges)."""
+    return bool(entry.get("malicious")) and entry.get("attack_type") == attack_type
+
+
 def score_matches(matched_entries: list[dict], full_dataset: list[dict], attack_type: str) -> ScoreResult:
     """attack_type scopes true-positive/recall counting to the entries THIS
     challenge targets, since a dataset can hold malicious entries for more
     than one challenge (e.g. windows_security serves 2 challenges)."""
 
-    def is_target_malicious(entry: dict) -> bool:
-        return bool(entry.get("malicious")) and entry.get("attack_type") == attack_type
-
-    total_malicious = sum(1 for e in full_dataset if is_target_malicious(e))
-    true_positives = sum(1 for e in matched_entries if is_target_malicious(e))
+    total_malicious = sum(1 for e in full_dataset if is_target_malicious(e, attack_type))
+    true_positives = sum(1 for e in matched_entries if is_target_malicious(e, attack_type))
     false_positives = len(matched_entries) - true_positives
 
     precision = true_positives / len(matched_entries) if matched_entries else 0.0

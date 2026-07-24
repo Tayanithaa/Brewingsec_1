@@ -30,8 +30,8 @@ export const validateRule = async (ruleText, token) => {
   }
 };
 
-export const runRule = async (ruleText, datasetId, token) => {
-  const response = await axios.post(`${API_URL}/run-rule`, { rule: ruleText, dataset: datasetId }, getAuthHeaders(token));
+export const runRule = async (ruleText, datasetId, token, attackType = null) => {
+  const response = await axios.post(`${API_URL}/run-rule`, { rule: ruleText, dataset: datasetId, attack_type: attackType }, getAuthHeaders(token));
   return response.data;
 };
 

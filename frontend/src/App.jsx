@@ -174,7 +174,7 @@ export default function App() {
     if (!authToken) return;
     setIsRunning(true);
     try {
-      const res = await runRule(ruleText, selectedDataset, authToken);
+      const res = await runRule(ruleText, selectedDataset, authToken, selectedChallenge?.attack_type);
       setRunResults(res);
     } catch (e) {
       if (e.response && e.response.status === 401) {

@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from ..services.sigma_parser import validate_and_parse
 from ..services.log_matcher import run_rule_against_dataset
-from ..services.scorer import estimate_fp_rate
+from ..services.scorer import estimate_fp_rate, is_target_malicious
 from ..services import data_store
 from ..services.rate_limit import limit_or_raise
 from ..auth.jwt_handler import verify_token
@@ -24,6 +24,7 @@ class ValidateRuleRequest(BaseModel):
 class RunRuleRequest(BaseModel):
     rule: str
     dataset: str
+    attack_type: str | None = None
 
 
 @router.post("/validate-rule")
@@ -72,8 +73,12 @@ def run_rule(req: RunRuleRequest, request: Request, user_id: str = Depends(verif
         for m in matched
     ]
 
-    total_malicious = sum(1 for e in dataset if e.get("malicious", False))
-    true_positives = sum(1 for m in matched if m["entry"].get("malicious", False))
+    if req.attack_type is not None:
+        total_malicious = sum(1 for e in dataset if is_target_malicious(e, req.attack_type))
+        true_positives = sum(1 for m in matched if is_target_malicious(m["entry"], req.attack_type))
+    else:
+        total_malicious = sum(1 for e in dataset if e.get("malicious", False))
+        true_positives = sum(1 for m in matched if m["entry"].get("malicious", False))
     precision = (true_positives / len(matched)) if len(matched) > 0 else 0.0
     recall = (true_positives / total_malicious) if total_malicious > 0 else 0.0
 
