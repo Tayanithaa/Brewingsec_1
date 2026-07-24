@@ -12,7 +12,25 @@
         "Not every NTLM network logon in this dataset is an attack — there are at least two distinct legitimate reasons (e.g., legacy infrastructure and maintenance accounts). A rule that only checks the technique signature will over-match; you need a compound condition to carve out both known-legitimate cases."
       ],
       "max_score": 100,
-      "xp_reward": 200
+      "xp_reward": 200,
+      "lesson": "Pass-the-Hash is a credential attack where an adversary uses a stolen NTLM password hash directly to authenticate — without ever knowing or cracking the actual plaintext password. In a healthy enterprise Windows domain, authentication should normally use Kerberos, not NTLM. When you see a network logon (LogonType 3) or NewCredentials logon (LogonType 9) authenticated via the legacy NTLM package instead of Kerberos, that's a signal worth investigating — it can indicate a hash-based attack, though it can also indicate legacy systems that haven't been migrated off NTLM. A good detection rule needs to account for both possibilities.",
+      "quiz": [
+        {
+          "question": "What makes Pass-the-Hash different from a typical password-based attack?",
+          "options": ["It requires physical access to the machine", "It uses a stolen password hash directly, without ever knowing the plaintext password", "It only works over HTTPS", "It requires the victim to click a phishing link"],
+          "correct_index": 1
+        },
+        {
+          "question": "In a modern Windows domain, which protocol should normally be used for logons instead of NTLM?",
+          "options": ["Kerberos", "LDAP", "RADIUS", "SAML"],
+          "correct_index": 0
+        },
+        {
+          "question": "Why is LogonType 3 combined with NTLM often worth investigating in an enterprise environment?",
+          "options": ["Network logons should never happen at all", "Enterprise environments typically default to Kerberos, so an NTLM fallback can indicate an attack or an unmigrated legacy system", "NTLM is always malicious with no exceptions", "It indicates a printer configuration error"],
+          "correct_index": 1
+        }
+      ]
     },
     {
       "id": "ch_002",
@@ -26,7 +44,25 @@
         "Look at what the task actually runs. Beware: there are multiple legitimate tasks that also use command-line encoding or LOLBins. You must filter out at least two independent legitimate tasks."
       ],
       "max_score": 100,
-      "xp_reward": 150
+      "xp_reward": 150,
+      "lesson": "Windows Task Scheduler is a common persistence mechanism: an attacker who has gained initial access creates a scheduled task so their payload keeps running even after a reboot or logoff. To evade simple antivirus signatures, attackers often route the actual payload through 'living-off-the-land binaries' (LOLBins) — legitimate Windows executables like rundll32.exe or mshta.exe — or through base64-encoded PowerShell, so the malicious intent isn't obvious from a casual glance at the command line. Event ID 4698 logs every scheduled task creation, legitimate or not — task creation itself isn't the signal, what the task actually runs is.",
+      "quiz": [
+        {
+          "question": "Why do attackers commonly use Scheduled Tasks?",
+          "options": ["To slow down the target system", "To establish persistence so their payload survives reboot or logoff", "To bypass network firewalls specifically", "To send phishing emails"],
+          "correct_index": 1
+        },
+        {
+          "question": "What is a 'living-off-the-land binary' (LOLBin)?",
+          "options": ["Custom malware written from scratch", "A legitimate, pre-installed Windows executable that attackers repurpose to blend in", "A type of firewall rule", "An antivirus signature"],
+          "correct_index": 1
+        },
+        {
+          "question": "Why can't a detection rule treat 'EventID 4698 exists' alone as malicious?",
+          "options": ["Because Windows doesn't actually log 4698 reliably", "Because legitimate IT automation and software updaters also create scheduled tasks constantly", "Because 4698 only applies to Linux systems", "Because scheduled tasks are never logged"],
+          "correct_index": 1
+        }
+      ]
     },
     {
       "id": "ch_003",
@@ -40,7 +76,25 @@
         "Some legitimate administrative and security tools also request that same access right. You will need to filter out multiple legitimate tools to avoid false positives."
       ],
       "max_score": 100,
-      "xp_reward": 250
+      "xp_reward": 250,
+      "lesson": "LSASS (Local Security Authority Subsystem Service) holds credentials and password hashes in memory while a Windows system is running — which makes it a prime target for credential-dumping tools like Mimikatz. Sysmon Event ID 10 logs any time one process opens a handle to another process, including the specific access rights requested. Mimikatz and similar tools typically request a well-documented combination of access rights (0x1010) when reading LSASS memory. But legitimate security tools — antivirus, EDR agents, even Task Manager's 'Create dump file' feature — also access lsass.exe, usually with different access rights. A rule that only checks 'something touched lsass.exe' will be full of false positives.",
+      "quiz": [
+        {
+          "question": "What is stored in LSASS memory that makes it valuable to attackers?",
+          "options": ["Browser bookmarks", "Cached credentials and password hashes", "Installed application list", "Network configuration only"],
+          "correct_index": 1
+        },
+        {
+          "question": "What does Sysmon Event ID 10 record?",
+          "options": ["File creation events", "One process opening a handle to access another process", "Outbound network connections", "Windows registry changes"],
+          "correct_index": 1
+        },
+        {
+          "question": "Why can't a detection rule treat 'something accessed lsass.exe' alone as malicious?",
+          "options": ["lsass.exe is never legitimately accessed by anything", "Legitimate security tools also access lsass.exe, typically with different access rights than credential-dumping tools", "lsass.exe doesn't generate any logs", "Sysmon doesn't monitor lsass.exe at all"],
+          "correct_index": 1
+        }
+      ]
     },
     {
       "id": "ch_004",
@@ -54,7 +108,25 @@
         "Both attackers and legitimate automation (like endpoint management or admin scripts) use encoded PowerShell. You'll need to explicitly filter out multiple legitimate sources."
       ],
       "max_score": 100,
-      "xp_reward": 200
+      "xp_reward": 200,
+      "lesson": "Attackers frequently base64-encode PowerShell payloads (using the -enc or -EncodedCommand flag) specifically to obfuscate the malicious code from casual log review and from simple signature-based detection tools that look for readable keywords. PowerShell itself is used constantly for completely legitimate system administration, so its mere presence in logs isn't suspicious — the encoding and obfuscation is the actual signal an analyst should focus on, not the tool itself.",
+      "quiz": [
+        {
+          "question": "Why do attackers encode PowerShell commands instead of running them in plaintext?",
+          "options": ["Encoded commands execute faster", "To obfuscate the payload from casual review and simple signature-based detection", "PowerShell requires encoding to run any command at all", "To reduce network bandwidth usage"],
+          "correct_index": 1
+        },
+        {
+          "question": "Which flag is commonly associated with encoded PowerShell execution?",
+          "options": ["-Command", "-EncodedCommand / -enc", "-File", "-Verbose"],
+          "correct_index": 1
+        },
+        {
+          "question": "Is the mere presence of powershell.exe in logs inherently suspicious?",
+          "options": ["Yes, PowerShell should never run in a healthy environment", "No — PowerShell is used constantly for legitimate administration; encoding/obfuscation is the real signal", "Yes, but only outside business hours", "No, PowerShell logs are never reliable enough to use"],
+          "correct_index": 1
+        }
+      ]
     },
     {
       "id": "ch_005",
@@ -68,7 +140,25 @@
         "Vulnerability scanners and some internal tools also send similar patterns for testing or authorized use. Filter out both independent sources of benign noise."
       ],
       "max_score": 100,
-      "xp_reward": 150
+      "xp_reward": 150,
+      "lesson": "SQL Injection happens when untrusted user input gets concatenated directly into a SQL query without proper handling, letting an attacker alter the query's logic. Common patterns include boolean-tautology payloads like ' OR '1'='1' (designed to make a WHERE clause always evaluate true, often to bypass login checks), UNION SELECT statements (used to append an attacker-controlled query onto the original one, exfiltrating data from other tables), and comment sequences like -- (used to truncate the rest of a legitimate query). Real attack traffic often overlaps with legitimate traffic in surprising ways, so a robust detection rule usually needs to combine multiple indicators rather than matching on a single generic pattern.",
+      "quiz": [
+        {
+          "question": "What is the core weakness that enables SQL Injection?",
+          "options": ["Weak user passwords", "Untrusted input being concatenated directly into SQL queries without proper handling", "Slow database server hardware", "Missing HTTPS encryption"],
+          "correct_index": 1
+        },
+        {
+          "question": "What does a payload like ' OR '1'='1' typically attempt to achieve?",
+          "options": ["Delete the entire database", "Create a condition that's always true, often to bypass authentication logic", "Encrypt the database connection", "Speed up query execution"],
+          "correct_index": 1
+        },
+        {
+          "question": "What is UNION SELECT commonly used for in a SQL injection attack?",
+          "options": ["Combining an attacker-controlled query with the original one to exfiltrate additional data", "Deleting all rows in a table", "Creating a brand new database", "Restarting the SQL service"],
+          "correct_index": 0
+        }
+      ]
     }
   ]
 }

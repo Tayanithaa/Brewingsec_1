@@ -6,6 +6,8 @@ import LogPanel from './components/LogViewer/LogPanel.jsx';
 import StatsBar from './components/LogViewer/StatsBar.jsx';
 import ChallengeList from './components/Challenges/ChallengeList.jsx';
 import ChallengeDetail from './components/Challenges/ChallengeDetail.jsx';
+import ChallengeConcept from './components/Challenges/ChallengeConcept.jsx';
+import ChallengeQuiz from './components/Challenges/ChallengeQuiz.jsx';
 import ScoreDashboard from './components/Challenges/ScoreDashboard.jsx';
 import XPBar from './components/Gamification/XPBar.jsx';
 import RankBadge from './components/Gamification/RankBadge.jsx';
@@ -49,6 +51,14 @@ function getOrCreateUserId() {
   return userId;
 }
 
+function hasCompletedIntro(challengeId) {
+  return localStorage.getItem(`pwndora_completed_intro:${challengeId}`) === 'true';
+}
+
+function markIntroCompleted(challengeId) {
+  localStorage.setItem(`pwndora_completed_intro:${challengeId}`, 'true');
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('landing');
   
@@ -62,6 +72,7 @@ export default function App() {
   const [challenges, setChallenges] = useState([]);
   
   const [selectedChallenge, setSelectedChallenge] = useState(null);
+  const [challengeStage, setChallengeStage] = useState('concept');
   const [selectedDataset, setSelectedDataset] = useState('windows_security');
   const [ruleText, setRuleText] = useState(DEFAULT_SIGMA_RULE);
   const [validationErrors, setValidationErrors] = useState([]);
@@ -149,12 +160,13 @@ export default function App() {
 
   const handleSelectChallenge = (challenge) => {
     setSelectedChallenge(challenge);
+    setChallengeStage(hasCompletedIntro(challenge.id) ? 'lab' : 'concept');
     setSelectedDataset(challenge.dataset);
     setActiveHintsCount(0);
     setScoreResult(null);
     setRunResults(null);
     setTranspiledQuery('');
-    
+
     if (challenge.id === "ch_001") {
       setRuleText(`title: Pass-the-Hash Logon Attempt\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4624\n        LogonType: 3\n        AuthenticationPackageName: NTLM\n    condition: selection`);
     } else if (challenge.id === "ch_002") {
@@ -168,6 +180,18 @@ export default function App() {
     }
 
     setActiveTab('sandbox');
+  };
+
+  const handleContinueToQuiz = () => setChallengeStage('quiz');
+
+  const handleContinueToLab = () => {
+    if (selectedChallenge) markIntroCompleted(selectedChallenge.id);
+    setChallengeStage('lab');
+  };
+
+  const handleSkipIntro = () => {
+    if (selectedChallenge) markIntroCompleted(selectedChallenge.id);
+    setChallengeStage('lab');
   };
 
   const handleRunRule = async () => {
@@ -379,9 +403,28 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'sandbox' && (
+        {activeTab === 'sandbox' && selectedChallenge && challengeStage === 'concept' && (
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar py-4">
+            <ChallengeConcept
+              challenge={selectedChallenge}
+              onContinue={handleContinueToQuiz}
+              onSkip={handleSkipIntro}
+            />
+          </div>
+        )}
+
+        {activeTab === 'sandbox' && selectedChallenge && challengeStage === 'quiz' && (
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar py-4">
+            <ChallengeQuiz
+              challenge={selectedChallenge}
+              onContinue={handleContinueToLab}
+            />
+          </div>
+        )}
+
+        {activeTab === 'sandbox' && (!selectedChallenge || challengeStage === 'lab') && (
           <div className="flex flex-col lg:flex-row gap-6 h-full items-stretch flex-1 min-h-0">
-            
+
             {/* LEFT COLUMN: PANELS & PARAMETERS */}
             <div className="w-full lg:w-[32%] flex-none space-y-6 flex flex-col justify-start overflow-y-auto custom-scrollbar pr-2">
               {selectedChallenge ? (
