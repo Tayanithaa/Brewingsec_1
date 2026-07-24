@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function ChallengeQuiz({ challenge, onContinue }) {
+export default function ChallengeQuiz({ challenge, onContinue, onContinueText }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOpt, setSelectedOpt] = useState(null);
   const [isChecked, setIsChecked] = useState(false);
@@ -148,7 +148,7 @@ export default function ChallengeQuiz({ challenge, onContinue }) {
             onClick={handleNext}
             className="bg-primary text-black font-bold text-xs px-6 py-2.5 rounded hover:shadow-cyber transition-all duration-300 active:scale-95 border border-primary flex items-center space-x-2"
           >
-            <span>{currentIdx < quiz.length - 1 ? 'NEXT QUESTION' : 'CONTINUE TO LAB'}</span>
+            <span>{currentIdx < quiz.length - 1 ? 'NEXT QUESTION' : (onContinueText || 'CONTINUE TO LAB')}</span>
             <span>&rarr;</span>
           </button>
         )}

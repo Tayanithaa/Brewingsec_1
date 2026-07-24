@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ChallengeList({ challenges, onSelectChallenge, completedChallenges }) {
+export default function ChallengeList({ challenges, onSelectChallenge, completedChallenges, onReviewBasics }) {
   const getDiffColor = (diff) => {
     switch (diff) {
       case 'Bronze': return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
@@ -12,10 +12,21 @@ export default function ChallengeList({ challenges, onSelectChallenge, completed
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between pb-3 border-b border-gray-800">
-        <h2 className="font-mono text-sm font-bold uppercase tracking-wider text-primary glow-text">
-          DETECTION CHALLENGES (T-05 SODE)
-        </h2>
+      <div className="flex items-center justify-between pb-3 border-b border-gray-800 flex-wrap gap-2">
+        <div className="flex items-center space-x-3">
+          <h2 className="font-mono text-sm font-bold uppercase tracking-wider text-primary glow-text">
+            DETECTION CHALLENGES (T-05 SODE)
+          </h2>
+          {onReviewBasics && (
+            <button
+              onClick={onReviewBasics}
+              className="text-[11px] font-mono text-secondary hover:text-white bg-secondary/10 hover:bg-secondary/20 border border-secondary/40 px-2.5 py-1 rounded transition-all duration-200 flex items-center space-x-1"
+            >
+              <span>📖</span>
+              <span>Review Sigma Basics</span>
+            </button>
+          )}
+        </div>
         <span className="font-mono text-xs text-textSecondary">
           CHALLENGES PLAYABLE: {challenges.length}
         </span>

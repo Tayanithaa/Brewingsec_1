@@ -17,6 +17,8 @@ import DatasetPicker from './components/DatasetPicker.jsx';
 import AttackTechniqueBadge from './components/AttackTechniqueBadge.jsx';
 import TranspilerOutput from './components/TranspilerOutput.jsx';
 
+import challengeDefs from '../../backend/app/data/challenges/challenge_definitions.json';
+
 import {
   login,
   validateRule,
@@ -54,6 +56,14 @@ function getOrCreateUserId() {
   return userId;
 }
 
+function hasCompletedSigmaBasics() {
+  return localStorage.getItem('pwndora_completed_sigma_basics') === 'true';
+}
+
+function markSigmaBasicsCompleted() {
+  localStorage.setItem('pwndora_completed_sigma_basics', 'true');
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('landing');
   const [authToken, setAuthToken] = useState(null);
@@ -65,6 +75,9 @@ export default function App() {
   const [datasets, setDatasets] = useState([]);
   const [challenges, setChallenges] = useState([]);
   
+  const [showSigmaFundamentals, setShowSigmaFundamentals] = useState(!hasCompletedSigmaBasics());
+  const [fundamentalsStage, setFundamentalsStage] = useState('concept');
+
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [challengeStage, setChallengeStage] = useState('preview'); // 'preview' | 'concept' | 'quiz' | 'pre-lab' | 'lab'
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -195,6 +208,17 @@ export default function App() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleOpenChallengesTab = () => {
+    setActiveTab('challenges');
+    setSelectedChallenge(null);
+    if (!hasCompletedSigmaBasics()) {
+      setShowSigmaFundamentals(true);
+      setFundamentalsStage('concept');
+    } else {
+      setShowSigmaFundamentals(false);
+    }
+  };
+
   const handleSelectChallenge = (challenge) => {
     setSelectedChallenge(challenge);
     setChallengeStage('preview');
@@ -299,6 +323,7 @@ export default function App() {
   const datasetFields = currentDataset?.fields || [];
   const isConvertDisabled = selectedChallenge ? (!hasSubmittedRule || isTimerExpired) : false;
   const isNavLocked = isTimerActive && !isTimerExpired;
+  const sigmaFundamentalsData = challengeDefs.sigma_fundamentals;
 
   return (
     <div className="min-h-screen bg-background text-textPrimary font-sans flex flex-col relative overflow-hidden cyber-grid">
@@ -342,8 +367,7 @@ export default function App() {
                 alert("A challenge lab is currently active. Use 'EXIT LAB' or submit your rule before navigating away.");
                 return;
               }
-              setActiveTab('challenges'); 
-              setSelectedChallenge(null); 
+              handleOpenChallengesTab();
             }}
             disabled={isNavLocked}
             className={`px-3 py-1.5 rounded transition-all duration-300 ${isNavLocked ? 'opacity-40 cursor-not-allowed text-gray-500' : activeTab === 'challenges' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
@@ -401,7 +425,7 @@ export default function App() {
               </p>
               <div className="pt-4 flex justify-center space-x-4">
                 <button 
-                  onClick={() => setActiveTab('challenges')}
+                  onClick={handleOpenChallengesTab}
                   className="bg-primary text-black font-bold text-xs px-8 py-3 rounded hover:shadow-cyber transition-all duration-300 active:scale-95 border border-primary"
                 >
                   START CHALLENGES
@@ -442,12 +466,42 @@ export default function App() {
         )}
 
         {activeTab === 'challenges' && (
-          <div className="max-w-5xl mx-auto py-4 overflow-y-auto custom-scrollbar">
-            <ChallengeList 
-              challenges={challenges} 
-              onSelectChallenge={handleSelectChallenge} 
-              completedChallenges={completedChallenges} 
-            />
+          <div className="max-w-5xl mx-auto py-4 overflow-y-auto custom-scrollbar flex-1 min-h-0 flex flex-col">
+            {showSigmaFundamentals ? (
+              fundamentalsStage === 'concept' ? (
+                <div className="flex-1 min-h-0 py-4 flex items-center justify-center">
+                  <ChallengeConcept
+                    challenge={sigmaFundamentalsData}
+                    onContinue={() => setFundamentalsStage('quiz')}
+                    onSkip={() => {
+                      markSigmaBasicsCompleted();
+                      setShowSigmaFundamentals(false);
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 min-h-0 py-4 flex items-center justify-center">
+                  <ChallengeQuiz
+                    challenge={sigmaFundamentalsData}
+                    onContinue={() => {
+                      markSigmaBasicsCompleted();
+                      setShowSigmaFundamentals(false);
+                    }}
+                    onContinueText="CONTINUE TO CHALLENGES"
+                  />
+                </div>
+              )
+            ) : (
+              <ChallengeList 
+                challenges={challenges} 
+                onSelectChallenge={handleSelectChallenge} 
+                completedChallenges={completedChallenges} 
+                onReviewBasics={() => {
+                  setShowSigmaFundamentals(true);
+                  setFundamentalsStage('concept');
+                }}
+              />
+            )}
           </div>
         )}
 
