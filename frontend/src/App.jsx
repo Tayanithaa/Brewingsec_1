@@ -5,6 +5,7 @@ import ErrorGutter from './components/Editor/ErrorGutter.jsx';
 import LogPanel from './components/LogViewer/LogPanel.jsx';
 import StatsBar from './components/LogViewer/StatsBar.jsx';
 import ChallengeList from './components/Challenges/ChallengeList.jsx';
+import ChallengePreview from './components/Challenges/ChallengePreview.jsx';
 import ChallengeDetail from './components/Challenges/ChallengeDetail.jsx';
 import ChallengeConcept from './components/Challenges/ChallengeConcept.jsx';
 import ChallengeQuiz from './components/Challenges/ChallengeQuiz.jsx';
@@ -41,6 +42,8 @@ detection:
     condition: selection
 level: medium`;
 
+const LAB_DURATION_SECONDS = 900; // 15 minutes countdown
+
 function getOrCreateUserId() {
   const STORAGE_KEY = 'pwndora_user_id';
   let userId = localStorage.getItem(STORAGE_KEY);
@@ -51,17 +54,8 @@ function getOrCreateUserId() {
   return userId;
 }
 
-function hasCompletedIntro(challengeId) {
-  return localStorage.getItem(`pwndora_completed_intro:${challengeId}`) === 'true';
-}
-
-function markIntroCompleted(challengeId) {
-  localStorage.setItem(`pwndora_completed_intro:${challengeId}`, 'true');
-}
-
 export default function App() {
   const [activeTab, setActiveTab] = useState('landing');
-  
   const [authToken, setAuthToken] = useState(null);
 
   const [userXp, setUserXp] = useState(0);
@@ -72,7 +66,13 @@ export default function App() {
   const [challenges, setChallenges] = useState([]);
   
   const [selectedChallenge, setSelectedChallenge] = useState(null);
-  const [challengeStage, setChallengeStage] = useState('concept');
+  const [challengeStage, setChallengeStage] = useState('preview'); // 'preview' | 'concept' | 'quiz' | 'pre-lab' | 'lab'
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(LAB_DURATION_SECONDS);
+  const [isTimerExpired, setIsTimerExpired] = useState(false);
+  const [hasSubmittedRule, setHasSubmittedRule] = useState(false);
+  const [isHoverPanelOpen, setIsHoverPanelOpen] = useState(false);
+
   const [selectedDataset, setSelectedDataset] = useState('windows_security');
   const [ruleText, setRuleText] = useState(DEFAULT_SIGMA_RULE);
   const [validationErrors, setValidationErrors] = useState([]);
@@ -135,6 +135,7 @@ export default function App() {
     fetchData();
   }, [authToken, loginFlow, refreshProgress]);
 
+  // Live validation debouncer
   useEffect(() => {
     if (!ruleText || !authToken) return;
     const timer = setTimeout(async () => {
@@ -149,7 +150,7 @@ export default function App() {
         if (err.response && err.response.status === 401) {
           loginFlow();
         } else {
-           setValidationErrors([{ line: 1, message: "Validation error" }]);
+          setValidationErrors([{ line: 1, message: "Validation error" }]);
         }
       }
     }, 800);
@@ -157,45 +158,71 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [ruleText, authToken, loginFlow]);
 
+  // Stopwatch/Countdown timer effect
+  useEffect(() => {
+    let interval = null;
+    if (isTimerActive && timerSeconds > 0) {
+      interval = setInterval(() => {
+        setTimerSeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setIsTimerActive(false);
+            setIsTimerExpired(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerActive, timerSeconds]);
+
+  // Browser navigation lock when timer is active
+  useEffect(() => {
+    if (!isTimerActive || isTimerExpired) return;
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isTimerActive, isTimerExpired]);
+
+  const formatTime = (totalSeconds) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleSelectChallenge = (challenge) => {
     setSelectedChallenge(challenge);
-    setChallengeStage(hasCompletedIntro(challenge.id) ? 'lab' : 'concept');
+    setChallengeStage('preview');
     setSelectedDataset(challenge.dataset);
     setActiveHintsCount(0);
     setScoreResult(null);
     setRunResults(null);
     setTranspiledQuery('');
-
-    if (challenge.id === "ch_001") {
-      setRuleText(`title: Pass-the-Hash Logon Attempt\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4624\n        LogonType: 3\n        AuthenticationPackageName: NTLM\n    condition: selection`);
-    } else if (challenge.id === "ch_002") {
-      setRuleText(`title: Scheduled Task Creation\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4698\n    condition: selection`);
-    } else if (challenge.id === "ch_003") {
-      setRuleText(`title: LSASS Process Access\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 10\n        TargetImage: 'C:\\\\Windows\\\\System32\\\\lsass.exe'\n    condition: selection`);
-    } else if (challenge.id === "ch_004") {
-      setRuleText(`title: Encoded PowerShell Process\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 1\n        Image: '*\\\\powershell.exe'\n    condition: selection`);
-    } else if (challenge.id === "ch_005") {
-      setRuleText(`title: SQL Injection Web Query\nlogsource:\n    category: webserver\ndetection:\n    selection:\n        URI|contains: 'UNION SELECT'\n    condition: selection`);
-    }
-
+    setHasSubmittedRule(false);
+    setIsTimerActive(false);
+    setTimerSeconds(LAB_DURATION_SECONDS);
+    setIsTimerExpired(false);
+    setIsHoverPanelOpen(false);
+    // Start every challenge with a blank editor (no pre-filled template)
+    setRuleText('# Write your Sigma rule here\n\n');
     setActiveTab('sandbox');
   };
 
-  const handleContinueToQuiz = () => setChallengeStage('quiz');
-
-  const handleContinueToLab = () => {
-    if (selectedChallenge) markIntroCompleted(selectedChallenge.id);
-    setChallengeStage('lab');
-  };
-
-  const handleSkipIntro = () => {
-    if (selectedChallenge) markIntroCompleted(selectedChallenge.id);
-    setChallengeStage('lab');
+  const handleExitLab = () => {
+    setIsTimerActive(false);
+    setIsTimerExpired(false);
+    setTimerSeconds(LAB_DURATION_SECONDS);
+    setSelectedChallenge(null);
+    setActiveTab('challenges');
   };
 
   const handleRunRule = async () => {
-    if (!authToken) return;
+    if (!authToken || isTimerExpired) return;
     setIsRunning(true);
     try {
       const res = await runRule(ruleText, selectedDataset, authToken, selectedChallenge?.attack_type);
@@ -211,25 +238,8 @@ export default function App() {
     }
   };
 
-  const handleValidate = async () => {
-    if (!authToken) return;
-    try {
-      const res = await validateRule(ruleText, authToken);
-      if (res.valid) {
-        alert("Validation Succeeded! Structure is complete.");
-        setValidationErrors([]);
-      } else {
-        setValidationErrors(res.errors || []);
-      }
-    } catch (e) {
-      if (e.response && e.response.status === 401) {
-        loginFlow();
-      }
-    }
-  };
-
   const handleTranspile = async () => {
-    if (!authToken) return;
+    if (!authToken || isTimerExpired) return;
     try {
       const res = await transpileRule(ruleText, selectedTarget, authToken);
       if (selectedTarget === 'splunk_spl') {
@@ -247,12 +257,14 @@ export default function App() {
   };
 
   const handleSubmitScored = async () => {
-    if (!selectedChallenge || !authToken) return;
+    if (!selectedChallenge || !authToken || isTimerExpired) return;
     setIsRunning(true);
     try {
       const res = await submitChallenge(selectedChallenge.id, ruleText, authToken);
       setScoreResult(res);
       setUserXp(res.total_xp);
+      setHasSubmittedRule(true); // Unlock convert button
+      setIsTimerActive(false); // Stop countdown timer on submission
       if (res.newly_completed && !completedChallenges.includes(selectedChallenge.id)) {
         setCompletedChallenges(prev => [...prev, selectedChallenge.id]);
       }
@@ -285,6 +297,8 @@ export default function App() {
   
   const currentDataset = datasets.find(d => d.id === selectedDataset);
   const datasetFields = currentDataset?.fields || [];
+  const isConvertDisabled = selectedChallenge ? (!hasSubmittedRule || isTimerExpired) : false;
+  const isNavLocked = isTimerActive && !isTimerExpired;
 
   return (
     <div className="min-h-screen bg-background text-textPrimary font-sans flex flex-col relative overflow-hidden cyber-grid">
@@ -309,26 +323,60 @@ export default function App() {
 
         <nav className="flex items-center space-x-1 text-xs font-mono">
           <button 
-            onClick={() => { setActiveTab('landing'); setSelectedChallenge(null); }}
-            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'landing' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
+            onClick={() => {
+              if (isNavLocked) {
+                alert("A challenge lab is currently active. Use 'EXIT LAB' or submit your rule before navigating away.");
+                return;
+              }
+              setActiveTab('landing'); 
+              setSelectedChallenge(null); 
+            }}
+            disabled={isNavLocked}
+            className={`px-3 py-1.5 rounded transition-all duration-300 ${isNavLocked ? 'opacity-40 cursor-not-allowed text-gray-500' : activeTab === 'landing' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             LANDING
           </button>
           <button 
-            onClick={() => { setActiveTab('challenges'); setSelectedChallenge(null); }}
-            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'challenges' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
+            onClick={() => {
+              if (isNavLocked) {
+                alert("A challenge lab is currently active. Use 'EXIT LAB' or submit your rule before navigating away.");
+                return;
+              }
+              setActiveTab('challenges'); 
+              setSelectedChallenge(null); 
+            }}
+            disabled={isNavLocked}
+            className={`px-3 py-1.5 rounded transition-all duration-300 ${isNavLocked ? 'opacity-40 cursor-not-allowed text-gray-500' : activeTab === 'challenges' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             CHALLENGES
           </button>
           <button 
-            onClick={() => { setActiveTab('sandbox'); setSelectedChallenge(null); setRuleText(DEFAULT_SIGMA_RULE); }}
-            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'sandbox' && !selectedChallenge ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
+            onClick={() => {
+              if (isNavLocked) {
+                alert("A challenge lab is currently active. Use 'EXIT LAB' or submit your rule before navigating away.");
+                return;
+              }
+              setActiveTab('sandbox'); 
+              setSelectedChallenge(null); 
+              setRuleText(DEFAULT_SIGMA_RULE); 
+            }}
+            disabled={isNavLocked}
+            className={`px-3 py-1.5 rounded transition-all duration-300 ${isNavLocked ? 'opacity-40 cursor-not-allowed text-gray-500' : activeTab === 'sandbox' && !selectedChallenge ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             SANDBOX
           </button>
           <button 
-            onClick={() => { setActiveTab('leaderboard'); setSelectedChallenge(null); if (authToken) refreshProgress(authToken); }}
-            className={`px-3 py-1.5 rounded transition-all duration-300 ${activeTab === 'leaderboard' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
+            onClick={() => {
+              if (isNavLocked) {
+                alert("A challenge lab is currently active. Use 'EXIT LAB' or submit your rule before navigating away.");
+                return;
+              }
+              setActiveTab('leaderboard'); 
+              setSelectedChallenge(null); 
+              if (authToken) refreshProgress(authToken); 
+            }}
+            disabled={isNavLocked}
+            className={`px-3 py-1.5 rounded transition-all duration-300 ${isNavLocked ? 'opacity-40 cursor-not-allowed text-gray-500' : activeTab === 'leaderboard' ? 'text-primary bg-primary/10 font-bold border border-primary/20 shadow-[0_0_10px_rgba(0,255,106,0.15)]' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             LEADERBOARD
           </button>
@@ -340,7 +388,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 p-6 z-10 overflow-hidden flex flex-col">
+      <main className="flex-1 p-6 z-10 overflow-hidden flex flex-col relative">
         
         {activeTab === 'landing' && (
           <div className="max-w-4xl mx-auto space-y-12 py-10 relative overflow-y-auto custom-scrollbar">
@@ -359,7 +407,7 @@ export default function App() {
                   START CHALLENGES
                 </button>
                 <button 
-                  onClick={() => { setActiveTab('sandbox'); setSelectedChallenge(null); }}
+                  onClick={() => { setActiveTab('sandbox'); setSelectedChallenge(null); setRuleText(DEFAULT_SIGMA_RULE); }}
                   className="border border-gray-700 hover:border-textSecondary text-textPrimary font-semibold text-xs px-8 py-3 rounded hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all duration-300"
                 >
                   OPEN SANDBOX
@@ -403,119 +451,281 @@ export default function App() {
           </div>
         )}
 
+        {/* STAGE 1: PREVIEW CARD */}
+        {activeTab === 'sandbox' && selectedChallenge && challengeStage === 'preview' && (
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar py-4 flex items-center justify-center">
+            <ChallengePreview
+              challenge={selectedChallenge}
+              onStart={() => setChallengeStage('concept')}
+              onBack={() => { setSelectedChallenge(null); setActiveTab('challenges'); }}
+            />
+          </div>
+        )}
+
+        {/* STAGE 2: CONCEPT BRIEFING */}
         {activeTab === 'sandbox' && selectedChallenge && challengeStage === 'concept' && (
-          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar py-4">
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar py-4 flex items-center justify-center">
             <ChallengeConcept
               challenge={selectedChallenge}
-              onContinue={handleContinueToQuiz}
-              onSkip={handleSkipIntro}
+              onContinue={() => setChallengeStage('quiz')}
+              onSkip={() => setChallengeStage('pre-lab')}
             />
           </div>
         )}
 
+        {/* STAGE 3: KNOWLEDGE QUIZ */}
         {activeTab === 'sandbox' && selectedChallenge && challengeStage === 'quiz' && (
-          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar py-4">
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar py-4 flex items-center justify-center">
             <ChallengeQuiz
               challenge={selectedChallenge}
-              onContinue={handleContinueToLab}
+              onContinue={() => setChallengeStage('pre-lab')}
             />
           </div>
         )}
 
-        {activeTab === 'sandbox' && (!selectedChallenge || challengeStage === 'lab') && (
-          <div className="flex flex-col lg:flex-row gap-6 h-full items-stretch flex-1 min-h-0">
-
-            {/* LEFT COLUMN: PANELS & PARAMETERS */}
-            <div className="w-full lg:w-[32%] flex-none space-y-6 flex flex-col justify-start overflow-y-auto custom-scrollbar pr-2">
-              {selectedChallenge ? (
-                <ChallengeDetail 
-                  challenge={selectedChallenge}
-                  onBack={() => { setSelectedChallenge(null); setActiveTab('challenges'); }}
-                  onUnlockHint={handleUnlockHint}
-                  activeHintsCount={activeHintsCount}
-                  userXp={userXp}
-                />
-              ) : (
-                <DatasetPicker 
-                  datasets={datasets}
-                  selectedDataset={selectedDataset}
-                  onDatasetChange={setSelectedDataset}
-                />
-              )}
-              {scoreResult && <ScoreDashboard scoreResult={scoreResult} />}
-            </div>
-
-            {/* CENTER COLUMN: MONACO EDITOR */}
-            <div className="flex-1 min-w-0 flex flex-col space-y-4 transition-all duration-300 overflow-hidden">
-              <div className="flex-1 min-h-[300px]">
-                <MonacoEditor 
-                  rule={ruleText} 
-                  onChange={setRuleText} 
-                  errors={validationErrors} 
-                  datasetFields={datasetFields}
-                />
+        {/* STAGE 4: PRE-LAB TIMER GATED START */}
+        {activeTab === 'sandbox' && selectedChallenge && challengeStage === 'pre-lab' && (
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar py-4 flex items-center justify-center">
+            <div className="bg-surface border border-gray-800 rounded-lg p-8 flex flex-col font-mono text-xs glow-border max-w-xl mx-auto text-center space-y-6 shadow-2xl">
+              <div className="space-y-2">
+                <span className="text-primary text-3xl block animate-bounce">⏱️</span>
+                <h2 className="font-sans font-bold text-xl text-textPrimary uppercase tracking-wider glow-text">
+                  LAB READY: {selectedChallenge.title}
+                </h2>
+                <p className="text-textSecondary text-xs leading-relaxed max-w-md mx-auto">
+                  You are about to start the 15-minute timed detection engineering lab for <span className="text-secondary font-bold">{selectedChallenge.attack_type}</span>.
+                </p>
               </div>
 
-              <div className="h-[90px] flex-none">
-                <ErrorGutter errors={validationErrors} />
+              <div className="bg-background/60 border border-gray-800 rounded p-4 text-left space-y-2 text-[11px] text-textSecondary">
+                <div className="flex items-center space-x-2 text-primary font-bold">
+                  <span>💡</span>
+                  <span>LAB RULES & TIPS:</span>
+                </div>
+                <ul className="list-disc list-inside space-y-1 text-textMuted">
+                  <li>The editor starts completely empty — write your rule from scratch.</li>
+                  <li>A 15:00 countdown timer begins once started and locks the lab at 0:00.</li>
+                  <li>Scenario details & hints are accessible via the left hover drawer.</li>
+                  <li>Submit your rule when ready to score precision and recall.</li>
+                </ul>
               </div>
-              
-              <EditorToolbar 
-                onRun={handleRunRule}
-                onValidate={handleValidate}
-                onTranspile={handleTranspile}
-                targets={[{ value: 'splunk_spl', label: 'Splunk SPL' }, { value: 'sentinel_kql', label: 'Microsoft Sentinel KQL' }]}
-                selectedTarget={selectedTarget}
-                onTargetChange={setSelectedTarget}
-                isRunning={isRunning}
-              />
 
-              {transpiledQuery && (
-                <TranspilerOutput
-                  query={transpiledQuery}
-                  targetName={selectedTarget === 'splunk_spl' ? 'Splunk SPL' : 'Microsoft Sentinel KQL'}
-                />
-              )}
-
-              {selectedChallenge && (
+              <div className="pt-2 flex justify-center space-x-4">
                 <button
-                  onClick={handleSubmitScored}
-                  disabled={isRunning || validationErrors.length > 0}
-                  className="w-full flex-none bg-secondary text-black hover:bg-opacity-90 font-bold text-xs py-2 rounded hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all duration-300 disabled:opacity-50 active:scale-95"
+                  onClick={handleExitLab}
+                  className="border border-gray-700 hover:border-gray-500 text-textSecondary px-5 py-2.5 rounded text-xs transition-all"
                 >
-                  {isRunning ? 'EVALUATING...' : 'SUBMIT RULE & SCORE'}
+                  Cancel
                 </button>
-              )}
+                <button
+                  onClick={() => {
+                    setIsTimerActive(true);
+                    setIsTimerExpired(false);
+                    setTimerSeconds(LAB_DURATION_SECONDS);
+                    setChallengeStage('lab');
+                  }}
+                  className="bg-primary text-black font-bold text-xs px-8 py-3 rounded hover:shadow-cyber transition-all duration-300 active:scale-95 border border-primary flex items-center space-x-2"
+                >
+                  <span>START TIMER & ENTER LAB</span>
+                  <span>&rarr;</span>
+                </button>
+              </div>
             </div>
+          </div>
+        )}
 
-            {/* RIGHT COLUMN: RESULTS / LOGS (SLIDES IN) */}
-            <div className={`flex flex-col border border-gray-800 rounded bg-surface/50 overflow-hidden h-full transition-all duration-300 ease-out transform origin-right ${runResults ? 'w-full lg:w-[35%] opacity-100 translate-x-0 ml-0' : 'w-0 opacity-0 translate-x-8 overflow-hidden pointer-events-none !ml-0 !border-0'}`}>
-              <div className="bg-black px-4 py-3 border-b border-gray-800 flex justify-between items-center">
-                <h3 className="font-mono text-xs text-textSecondary uppercase tracking-widest glow-text-blue whitespace-nowrap">Match Results</h3>
-                <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded font-mono border border-primary/30 whitespace-nowrap">
-                  {runResults ? runResults.match_count : 0} MATCHES
-                </span>
+        {/* STAGE 5: ACTIVE LAB / SANDBOX */}
+        {activeTab === 'sandbox' && (!selectedChallenge || challengeStage === 'lab') && (
+          <div className="flex flex-col h-full flex-1 min-h-0 relative">
+            
+            {/* TIMED LAB HEADER BAR (ONLY WHEN IN CHALLENGE MODE) */}
+            {selectedChallenge && (
+              <div className="flex-none bg-surface/90 border border-gray-800 rounded-lg px-4 py-2.5 mb-4 flex items-center justify-between font-mono text-xs backdrop-blur-md glow-border">
+                <div className="flex items-center space-x-3">
+                  <span className="font-bold text-textPrimary uppercase tracking-wider text-xs">{selectedChallenge.title}</span>
+                  <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded font-mono">
+                    {selectedChallenge.attack_type}
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <div className={`flex items-center space-x-2 border px-3 py-1 rounded font-mono font-bold tracking-widest text-xs transition-all duration-300 ${
+                    isTimerExpired 
+                      ? 'bg-red-500/20 text-red-400 border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.4)]'
+                      : timerSeconds <= 60
+                        ? 'bg-red-500/20 text-red-400 border-red-500/50 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        : 'bg-background border-primary/40 text-primary shadow-[0_0_10px_rgba(0,255,106,0.15)]'
+                  }`}>
+                    <span className={isTimerActive && timerSeconds <= 60 ? 'animate-bounce' : ''}>
+                      {isTimerExpired ? '⚠️' : '⏱️'}
+                    </span>
+                    <span>
+                      {isTimerExpired ? "TIME'S UP (00:00)" : `REMAINING: ${formatTime(timerSeconds)}`}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleExitLab}
+                    className="bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 font-bold text-[11px] px-3 py-1 rounded transition-all"
+                  >
+                    EXIT LAB
+                  </button>
+                </div>
               </div>
-              
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
-                {runResults || isRunning ? (
-                  <LogPanel
-                    matchedEntries={runResults ? runResults.matched_entries : []}
-                    totalEntries={runResults ? runResults.total_entries : 0}
-                    isRunning={isRunning}
+            )}
+
+            {/* UNMISSABLE TIME'S UP BANNER OVERLAY */}
+            {selectedChallenge && isTimerExpired && (
+              <div className="bg-red-950/90 border border-red-500/60 rounded-lg p-4 mb-4 text-center font-mono animate-fadeIn flex flex-col md:flex-row items-center justify-between gap-3 shadow-[0_0_20px_rgba(239,68,68,0.3)] z-20">
+                <div className="flex items-center space-x-3 text-left">
+                  <span className="text-red-400 text-2xl font-bold animate-pulse">⚠️</span>
+                  <div>
+                    <h3 className="text-red-400 font-bold text-sm tracking-wider uppercase">TIME'S UP — LAB LOCKED</h3>
+                    <p className="text-red-200/80 text-[11px] leading-relaxed">
+                      The 15-minute countdown has expired. The Monaco editor and action buttons are now read-only.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleExitLab}
+                  className="bg-red-500 text-black font-bold text-xs px-5 py-2 rounded hover:bg-red-400 transition-all whitespace-nowrap"
+                >
+                  EXIT LAB
+                </button>
+              </div>
+            )}
+
+            {/* LEFT HOVER TRIGGER STRIP & OVERLAY DRAWER FOR HINTS (ONLY IN CHALLENGE MODE) */}
+            {selectedChallenge && (
+              <>
+                <div 
+                  onMouseEnter={() => setIsHoverPanelOpen(true)}
+                  className="absolute left-0 top-12 bottom-0 w-3 bg-primary/20 border-r border-primary/40 z-30 cursor-pointer flex items-center justify-center hover:w-6 hover:bg-primary/30 transition-all duration-200 group rounded-r"
+                  title="Hover to view scenario & hints"
+                >
+                  <span className="text-primary text-[9px] font-mono font-bold transform -rotate-90 whitespace-nowrap tracking-widest group-hover:scale-105">
+                    📋 HINTS &gt;
+                  </span>
+                </div>
+
+                <div 
+                  onMouseLeave={() => setIsHoverPanelOpen(false)}
+                  className={`absolute left-0 top-12 bottom-0 z-50 w-[380px] bg-surface/95 backdrop-blur-md border-r border-primary/40 p-4 shadow-[12px_0_30px_rgba(0,0,0,0.85)] transition-transform duration-300 ease-in-out transform ${isHoverPanelOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                >
+                  <div className="flex justify-between items-center pb-2 mb-3 border-b border-gray-800 font-mono">
+                    <span className="text-xs font-bold text-primary flex items-center space-x-1.5">
+                      <span>📋</span>
+                      <span>SCENARIO & HINTS</span>
+                    </span>
+                    <span className="text-[9px] text-textMuted bg-background px-1.5 py-0.5 rounded">Move away to close</span>
+                  </div>
+                  <div className="h-[calc(100%-40px)] overflow-y-auto custom-scrollbar">
+                    <ChallengeDetail 
+                      challenge={selectedChallenge}
+                      onBack={handleExitLab}
+                      onUnlockHint={handleUnlockHint}
+                      activeHintsCount={activeHintsCount}
+                      userXp={userXp}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* LAB LAYOUT */}
+            <div className="flex flex-col lg:flex-row gap-6 h-full items-stretch flex-1 min-h-0">
+
+              {/* LEFT COLUMN IN SANDBOX MODE (DATASET PICKER) */}
+              {!selectedChallenge && (
+                <div className="w-full lg:w-[32%] flex-none space-y-6 flex flex-col justify-start overflow-y-auto custom-scrollbar pr-2">
+                  <DatasetPicker 
+                    datasets={datasets}
+                    selectedDataset={selectedDataset}
+                    onDatasetChange={setSelectedDataset}
                   />
-                ) : null}
-              </div>
-              
-              {runResults && (
-                <StatsBar 
-                  totalEntries={runResults.total_entries} 
-                  matchCount={runResults.match_count} 
-                  fpRateEstimate={runResults.fp_rate_estimate} 
-                  precision={runResults.precision}
-                  recall={runResults.recall}
-                />
+                  {scoreResult && <ScoreDashboard scoreResult={scoreResult} />}
+                </div>
               )}
+
+              {/* MAIN CENTER COLUMN: MONACO EDITOR */}
+              <div className="flex-1 min-w-0 flex flex-col space-y-4 transition-all duration-300 overflow-hidden">
+                <div className="flex-1 min-h-[300px]">
+                  <MonacoEditor 
+                    rule={ruleText} 
+                    onChange={setRuleText} 
+                    errors={validationErrors} 
+                    datasetFields={datasetFields}
+                    readOnly={isTimerExpired}
+                  />
+                </div>
+
+                <div className="h-[90px] flex-none">
+                  <ErrorGutter errors={validationErrors} />
+                </div>
+                
+                <EditorToolbar 
+                  onRun={handleRunRule}
+                  onTranspile={handleTranspile}
+                  targets={[{ value: 'splunk_spl', label: 'Splunk SPL' }, { value: 'sentinel_kql', label: 'Microsoft Sentinel KQL' }]}
+                  selectedTarget={selectedTarget}
+                  onTargetChange={setSelectedTarget}
+                  isRunning={isRunning}
+                  isConvertDisabled={isConvertDisabled}
+                  isRunDisabled={isTimerExpired}
+                />
+
+                {transpiledQuery && (
+                  <TranspilerOutput
+                    query={transpiledQuery}
+                    targetName={selectedTarget === 'splunk_spl' ? 'Splunk SPL' : 'Microsoft Sentinel KQL'}
+                  />
+                )}
+
+                {selectedChallenge && (
+                  <button
+                    onClick={handleSubmitScored}
+                    disabled={isRunning || validationErrors.length > 0 || isTimerExpired}
+                    className="w-full flex-none bg-secondary text-black hover:bg-opacity-90 font-bold text-xs py-2.5 rounded hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 tracking-wider font-mono"
+                  >
+                    {isTimerExpired ? 'LAB LOCKED (EXPIRED)' : isRunning ? 'EVALUATING...' : 'SUBMIT RULE & SCORE'}
+                  </button>
+                )}
+
+                {selectedChallenge && scoreResult && (
+                  <div className="mt-2">
+                    <ScoreDashboard scoreResult={scoreResult} />
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT COLUMN: RESULTS / LOGS (SLIDES IN WHEN RUN) */}
+              <div className={`flex flex-col border border-gray-800 rounded bg-surface/50 overflow-hidden h-full transition-all duration-300 ease-out transform origin-right ${runResults ? 'w-full lg:w-[35%] opacity-100 translate-x-0 ml-0' : 'w-0 opacity-0 translate-x-8 overflow-hidden pointer-events-none !ml-0 !border-0'}`}>
+                <div className="bg-black px-4 py-3 border-b border-gray-800 flex justify-between items-center">
+                  <h3 className="font-mono text-xs text-textSecondary uppercase tracking-widest glow-text-blue whitespace-nowrap">Match Results</h3>
+                  <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded font-mono border border-primary/30 whitespace-nowrap">
+                    {runResults ? runResults.match_count : 0} MATCHES
+                  </span>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-0">
+                  {runResults || isRunning ? (
+                    <LogPanel
+                      matchedEntries={runResults ? runResults.matched_entries : []}
+                      totalEntries={runResults ? runResults.total_entries : 0}
+                      isRunning={isRunning}
+                    />
+                  ) : null}
+                </div>
+                
+                {runResults && (
+                  <StatsBar 
+                    totalEntries={runResults.total_entries} 
+                    matchCount={runResults.match_count} 
+                    fpRateEstimate={runResults.fp_rate_estimate} 
+                    precision={runResults.precision}
+                    recall={runResults.recall}
+                  />
+                )}
+              </div>
             </div>
           </div>
         )}

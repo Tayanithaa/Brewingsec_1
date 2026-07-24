@@ -18,17 +18,20 @@
         {
           "question": "What makes Pass-the-Hash different from a typical password-based attack?",
           "options": ["It requires physical access to the machine", "It uses a stolen password hash directly, without ever knowing the plaintext password", "It only works over HTTPS", "It requires the victim to click a phishing link"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "Pass-the-Hash attacks work because NTLM authentication only requires the hash itself, not the original password — so an attacker who steals just the hash can authenticate without ever cracking or knowing the actual plaintext password."
         },
         {
           "question": "In a modern Windows domain, which protocol should normally be used for logons instead of NTLM?",
           "options": ["Kerberos", "LDAP", "RADIUS", "SAML"],
-          "correct_index": 0
+          "correct_index": 0,
+          "explanation": "Kerberos is the default, more secure authentication protocol in a modern Windows Active Directory domain. NTLM is a legacy protocol kept mainly for backward compatibility, and its continued use is often worth investigating."
         },
         {
           "question": "Why is LogonType 3 combined with NTLM often worth investigating in an enterprise environment?",
           "options": ["Network logons should never happen at all", "Enterprise environments typically default to Kerberos, so an NTLM fallback can indicate an attack or an unmigrated legacy system", "NTLM is always malicious with no exceptions", "It indicates a printer configuration error"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "Well-configured enterprise domains prefer Kerberos, so seeing NTLM used for a network logon suggests either an attack (hash-based authentication) or a legacy/misconfigured system — both worth a SOC analyst's attention."
         }
       ]
     },
@@ -50,17 +53,20 @@
         {
           "question": "Why do attackers commonly use Scheduled Tasks?",
           "options": ["To slow down the target system", "To establish persistence so their payload survives reboot or logoff", "To bypass network firewalls specifically", "To send phishing emails"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "Scheduled tasks let malicious code automatically re-run after a reboot, logoff, or at a set interval, without the attacker needing to maintain an active connection — that's exactly what 'persistence' means in an attack."
         },
         {
           "question": "What is a 'living-off-the-land binary' (LOLBin)?",
           "options": ["Custom malware written from scratch", "A legitimate, pre-installed Windows executable that attackers repurpose to blend in", "A type of firewall rule", "An antivirus signature"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "rundll32.exe is a legitimate Windows system binary that attackers frequently abuse to execute malicious code indirectly, since its presence alone looks normal to defenders and simple signature-based tools."
         },
         {
           "question": "Why can't a detection rule treat 'EventID 4698 exists' alone as malicious?",
           "options": ["Because Windows doesn't actually log 4698 reliably", "Because legitimate IT automation and software updaters also create scheduled tasks constantly", "Because 4698 only applies to Linux systems", "Because scheduled tasks are never logged"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "Windows itself, software updaters, and IT automation scripts all create scheduled tasks as part of completely normal operation — Event ID 4698 alone can't distinguish malicious activity from routine maintenance; the task's actual content is what matters."
         }
       ]
     },
@@ -82,17 +88,20 @@
         {
           "question": "What is stored in LSASS memory that makes it valuable to attackers?",
           "options": ["Browser bookmarks", "Cached credentials and password hashes", "Installed application list", "Network configuration only"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "LSASS manages authentication on a live Windows system and holds credential material, including hashes, in memory while sessions are active — exactly what makes it valuable to an attacker trying to harvest credentials."
         },
         {
           "question": "What does Sysmon Event ID 10 record?",
           "options": ["File creation events", "One process opening a handle to access another process", "Outbound network connections", "Windows registry changes"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "Sysmon Event ID 10 specifically logs 'ProcessAccess' — one process requesting a handle to open and interact with another process's memory, the mechanism credential-dumping tools rely on."
         },
         {
           "question": "Why can't a detection rule treat 'something accessed lsass.exe' alone as malicious?",
           "options": ["lsass.exe is never legitimately accessed by anything", "Legitimate security tools also access lsass.exe, typically with different access rights than credential-dumping tools", "lsass.exe doesn't generate any logs", "Sysmon doesn't monitor lsass.exe at all"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "Antivirus, EDR agents, and even built-in Windows tools legitimately open handles to lsass.exe. What distinguishes malicious access is typically the specific access rights requested (like the 0x1010 pattern associated with tools like Mimikatz), not just that access happened."
         }
       ]
     },
@@ -114,17 +123,20 @@
         {
           "question": "Why do attackers encode PowerShell commands instead of running them in plaintext?",
           "options": ["Encoded commands execute faster", "To obfuscate the payload from casual review and simple signature-based detection", "PowerShell requires encoding to run any command at all", "To reduce network bandwidth usage"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "Base64-encoding a PowerShell payload hides the actual command text from anyone glancing at logs or from simple keyword-matching security tools, without changing what the code does when executed."
         },
         {
           "question": "Which flag is commonly associated with encoded PowerShell execution?",
           "options": ["-Command", "-EncodedCommand / -enc", "-File", "-Verbose"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "PowerShell's -EncodedCommand flag (often shortened to -enc) tells PowerShell to base64-decode and execute the given string as a command — this specific flag is a strong, well-known signature of obfuscated execution."
         },
         {
           "question": "Is the mere presence of powershell.exe in logs inherently suspicious?",
           "options": ["Yes, PowerShell should never run in a healthy environment", "No — PowerShell is used constantly for legitimate administration; encoding/obfuscation is the real signal", "Yes, but only outside business hours", "No, PowerShell logs are never reliable enough to use"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "PowerShell is one of the most heavily used legitimate administration tools in any Windows environment — flagging every instance would produce overwhelming false positives. The encoding/obfuscation specifically is the meaningful signal."
         }
       ]
     },
@@ -146,17 +158,20 @@
         {
           "question": "What is the core weakness that enables SQL Injection?",
           "options": ["Weak user passwords", "Untrusted input being concatenated directly into SQL queries without proper handling", "Slow database server hardware", "Missing HTTPS encryption"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "SQL Injection is fundamentally an input-validation failure: when user-supplied data is inserted directly into a SQL query string instead of being properly parameterized or sanitized, an attacker can inject their own SQL logic."
         },
         {
           "question": "What does a payload like ' OR '1'='1' typically attempt to achieve?",
           "options": ["Delete the entire database", "Create a condition that's always true, often to bypass authentication logic", "Encrypt the database connection", "Speed up query execution"],
-          "correct_index": 1
+          "correct_index": 1,
+          "explanation": "' OR '1'='1' appended to a WHERE clause makes the overall condition always evaluate to true regardless of the real values — commonly used to bypass login checks that compare a submitted password against a stored one."
         },
         {
           "question": "What is UNION SELECT commonly used for in a SQL injection attack?",
           "options": ["Combining an attacker-controlled query with the original one to exfiltrate additional data", "Deleting all rows in a table", "Creating a brand new database", "Restarting the SQL service"],
-          "correct_index": 0
+          "correct_index": 0,
+          "explanation": "UNION SELECT lets an attacker append the results of their own arbitrary SELECT query onto the results of the original, legitimate query — a classic technique for pulling data out of tables the application was never meant to expose."
         }
       ]
     }
