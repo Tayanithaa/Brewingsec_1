@@ -9,7 +9,7 @@ app = FastAPI(
     title="PWNDORA Sigma Rule Builder",
     description="Track: T-05 | PS: BSCDS26-SODE-01",
     version="1.0.0",
-)
+) # Reload trigger
 
 app.add_middleware(
     CORSMiddleware,

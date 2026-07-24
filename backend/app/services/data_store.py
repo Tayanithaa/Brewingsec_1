@@ -33,10 +33,12 @@ def load_all():
 
 
 def get_dataset(name: str) -> list[dict] | None:
+    load_all()
     return _datasets.get(name)
 
 
 def list_datasets() -> list[dict]:
+    load_all()
     return [
         {
             "id": name, 
@@ -58,14 +60,17 @@ def _describe(name: str) -> str:
 
 
 def list_challenges() -> list[dict]:
+    load_all()
     return _challenge_definitions
 
 
 def get_challenge(challenge_id: str) -> dict | None:
+    load_all()
     return _challenge_by_id.get(challenge_id)
 
 
 def get_reference_rule(challenge_id: str) -> str | None:
+    load_all()
     return _reference_rules.get(challenge_id)
 
 

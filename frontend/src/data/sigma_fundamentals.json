@@ -1,0 +1,38 @@
+{
+  "id": "sigma_basics",
+  "title": "Sigma Rule Fundamentals",
+  "attack_type": "SYNTAX-101",
+  "lesson": "Sigma is an open, generic format for writing detection rules that describe how to find suspicious activity in log data. The same rule can, in principle, be translated into the query language of many different SIEM and log platforms — instead of writing the same detection logic over and over in each tool's own syntax. That's Sigma's core value: write once, deploy everywhere. This platform even includes a transpiler that converts your rule directly to Splunk SPL and Microsoft Sentinel KQL.\n\nEvery Sigma rule is written in YAML and has three parts that matter for this lab: a logsource (what kind of log data the rule applies to), a detection block (the actual matching logic), and a condition (how to combine multiple pieces of matching logic into one true/false decision).\n\nInside detection, you define one or more named selections — each selection is a set of field: value pairs that must ALL be true for that selection to match (this is an implicit AND). If you give a field a LIST of values instead of one, ANY of them matching is enough — for example, LogonType: [3, 9] matches if LogonType is 3 OR 9.\n\nBy default, matching a field's value requires an exact match. To match more flexibly, Sigma modifiers change how the comparison works. This lab supports: |contains (the field's value contains this substring anywhere), |endswith (the field's value ends with this string — useful for full file paths where you only care about the filename), |startswith, and |re (regular expression matching).\n\nFinally, the condition field combines your named selections using and, or, not, and parentheses for grouping — for example, condition: selection and not filter means \"match everything selection catches, except entries that also match filter.\" This is exactly how you exclude known-legitimate activity that would otherwise look identical to what you're hunting for — which is precisely what several of the challenges in this lab require you to do.",
+  "quiz": [
+    {
+      "question": "In a Sigma detection block, what does giving a field a list of values (e.g. LogonType: [3, 9]) mean?",
+      "options": ["The field must equal exactly the list itself", "ANY of the listed values matching is enough (OR logic)", "ALL of the listed values must match simultaneously", "The field is ignored entirely"],
+      "correct_index": 1,
+      "explanation": "A list of values under a single field name is Sigma's shorthand for OR logic — the field matches if it equals any one of the listed values."
+    },
+    {
+      "question": "What does the |endswith modifier do?",
+      "options": ["Matches only if the field is completely empty", "Matches if the field's value ends with the given string", "Matches if the field's value starts with the given string", "Reverses the field's value before matching"],
+      "correct_index": 1,
+      "explanation": "|endswith is especially useful for full file paths, where you only care about the filename at the end — for example, matching anything ending in \\powershell.exe regardless of which folder it ran from."
+    },
+    {
+      "question": "Inside a single selection block, how are multiple field:value pairs combined?",
+      "options": ["OR — any one of them being true is enough", "AND — all of them must be true", "They're evaluated in random order", "Only the first field listed is actually checked"],
+      "correct_index": 1,
+      "explanation": "A selection block is an implicit AND of everything inside it — every field:value pair listed must be true for that selection to match a given log entry."
+    },
+    {
+      "question": "What does condition: selection and not filter mean?",
+      "options": ["Match everything filter catches, except what selection also catches", "Match everything selection catches, except entries that also match filter", "Match only entries that match neither selection nor filter", "This is invalid Sigma syntax"],
+      "correct_index": 1,
+      "explanation": "This is the standard pattern for excluding known-legitimate activity that would otherwise look identical to what you're hunting for — selection casts a wide net, filter carves out the false positives."
+    },
+    {
+      "question": "Why is Sigma often described as 'write once, deploy everywhere'?",
+      "options": ["Because Sigma rules automatically fix bugs in any SIEM", "Because the same rule can be translated into different SIEM query languages instead of rewriting detection logic per platform", "Because Sigma only works with Windows logs", "Because Sigma rules never need to be updated once written"],
+      "correct_index": 1,
+      "explanation": "Rather than writing the same detection logic separately in Splunk SPL, Microsoft Sentinel KQL, and other platforms' native syntax, Sigma provides one common format that can be converted to many targets — this lab's own transpiler feature is a direct example of that."
+    }
+  ]
+}

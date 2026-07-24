@@ -17,7 +17,7 @@ import DatasetPicker from './components/DatasetPicker.jsx';
 import AttackTechniqueBadge from './components/AttackTechniqueBadge.jsx';
 import TranspilerOutput from './components/TranspilerOutput.jsx';
 
-import challengeDefs from '../../backend/app/data/challenges/challenge_definitions.json';
+import sigmaFundamentalsData from './data/sigma_fundamentals.json';
 
 import {
   login,
@@ -323,7 +323,6 @@ export default function App() {
   const datasetFields = currentDataset?.fields || [];
   const isConvertDisabled = selectedChallenge ? (!hasSubmittedRule || isTimerExpired) : false;
   const isNavLocked = isTimerActive && !isTimerExpired;
-  const sigmaFundamentalsData = challengeDefs.sigma_fundamentals;
 
   return (
     <div className="min-h-screen bg-background text-textPrimary font-sans flex flex-col relative overflow-hidden cyber-grid">

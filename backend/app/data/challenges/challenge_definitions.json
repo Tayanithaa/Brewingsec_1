@@ -212,6 +212,76 @@
           "explanation": "UNION SELECT lets an attacker append the results of their own arbitrary SELECT query onto the results of the original, legitimate query — a classic technique for pulling data out of tables the application was never meant to expose."
         }
       ]
+    },
+    {
+      "id": "ch_006",
+      "title": "Malicious Service Persistence",
+      "difficulty": "Gold",
+      "dataset": "windows_security",
+      "attack_type": "T1543.003",
+      "hints": [
+        "Windows Event ID 7045 logs every new service creation — but normal administrative software also installs services continuously.",
+        "Adversaries often place service binaries in user-writeable paths like Temp or AppData, or launch encoded PowerShell scripts directly.",
+        "Beware of legitimate enterprise automation: IT audit tools and corporate backup services may also run from temporary directories or script wrappers. Filter out both specific benign service names to avoid false positives."
+      ],
+      "max_score": 100,
+      "xp_reward": 250,
+      "lesson": "Windows Event ID 7045 logs the installation of a new service on the system. Adversaries often create new services to maintain persistent access or execute payloads with SYSTEM privileges. Legitimate software installation and updates also register new services, typically installing binaries into C:\\Windows\\System32 or C:\\Program Files. When a service binary resides in user-writeable directories like \\Temp\\ or \\AppData\\, or invokes encoded PowerShell, it strongly indicates malicious persistence.",
+      "quiz": [
+        {
+          "question": "What does Windows Event ID 7045 log?",
+          "options": ["A user logging off", "A new Windows service being installed on the host", "A network share being created", "A firewall rule modification"],
+          "correct_index": 1,
+          "explanation": "Event ID 7045 specifically records when a new service is installed in the System log, including the ServiceName and ServiceFileName."
+        },
+        {
+          "question": "Why are service paths pointing to \\Temp\\ or \\AppData\\ suspicious?",
+          "options": ["Services are physically unable to execute from those folders", "Legitimate system services usually install into C:\\Windows\\System32 or C:\\Program Files; user-writeable folders like Temp/AppData are commonly abused by non-admin attackers", "Temp directories are automatically deleted every 5 minutes", "They indicate a corrupt Windows installation"],
+          "correct_index": 1,
+          "explanation": "User-writeable folders do not require administrative privileges to write files to, making them a common staging ground for adversaries establishing service persistence."
+        },
+        {
+          "question": "Why is a compound condition (with filters) required when searching for suspicious service paths?",
+          "options": ["Sigma rules do not support single selection blocks", "Legitimate enterprise tools (like IT audit agents or backup scripts) may also run from temporary paths or script wrappers; filtering them avoids false positives", "Event ID 7045 logs cannot be parsed without a filter", "To speed up SIEM query execution"],
+          "correct_index": 1,
+          "explanation": "Corporate IT automation frequently uses temporary folders for staging installer agents or diagnostic scripts — without filter exclusions, a detection rule will generate high false-positive rates."
+        }
+      ]
+    },
+    {
+      "id": "ch_007",
+      "title": "Suspicious Service-Account Interactive Logon",
+      "difficulty": "Silver",
+      "dataset": "windows_security",
+      "attack_type": "T1078.002",
+      "hints": [
+        "Windows Event ID 4624 records all successful logons — the key signal for service account abuse lies in the LogonType.",
+        "Service accounts (conventionally named with prefixes like svc_) are designed for automated background processes (LogonType 5) or network logons (LogonType 3), never interactive keyboard/desktop logons (LogonType 2).",
+        "Not every interactive logon by a service-formatted account is malicious — emergency breakglass accounts and dedicated staging console logons may be authorized exceptions. Filter out both benign exceptions to achieve maximum precision."
+      ],
+      "max_score": 100,
+      "xp_reward": 200,
+      "lesson": "Service accounts are non-human accounts designed to run background services, automated tasks, or database processes. In Windows security event logs (Event ID 4624), LogonType 2 signifies an interactive keyboard/desktop logon. Legitimate service accounts should only perform service logons (LogonType 5) or network logons (LogonType 3). When an account adhering to service naming conventions (e.g., prefix svc_) performs a LogonType 2 interactive logon, it indicates an adversary abusing service credentials to log in interactively.",
+      "quiz": [
+        {
+          "question": "What does LogonType 2 indicate in Windows Event ID 4624?",
+          "options": ["A service background logon", "An interactive keyboard/desktop logon at the local console", "A network drive mapping logon", "An unlock workstation event"],
+          "correct_index": 1,
+          "explanation": "LogonType 2 is assigned when a user logs on interactively at the computer keyboard/terminal."
+        },
+        {
+          "question": "Why should service accounts (e.g., svc_sql) generally NOT perform LogonType 2 logons?",
+          "options": ["Service accounts are forbidden by Windows from logging on at all", "Service accounts are intended for automated background services (LogonType 5) or network tasks (LogonType 3); interactive logons suggest human misuse or stolen credentials", "LogonType 2 consumes double the RAM of LogonType 5", "LogonType 2 only works for local Administrator accounts"],
+          "correct_index": 1,
+          "explanation": "Non-human service accounts have no legitimate need to initiate interactive desktop sessions under standard operation, so an interactive logon indicates credential theft or policy violation."
+        },
+        {
+          "question": "Why might a SOC analyst need filter exclusions when hunting for interactive service account logons?",
+          "options": ["To exclude authorized exceptions like emergency breakglass accounts (svc_breakglass) or dedicated staging consoles", "Because Event ID 4624 is unreliable", "Because NTLM authentication breaks LogonType 2 filtering", "To prevent database locks in the SIEM"],
+          "correct_index": 0,
+          "explanation": "Certain breakglass procedures or staging environments legitimately allow interactive service account access; filtering known authorized exceptions prevents false positive alerts."
+        }
+      ]
     }
   ]
 }

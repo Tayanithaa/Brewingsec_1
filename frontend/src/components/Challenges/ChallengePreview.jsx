@@ -6,6 +6,8 @@ const OBJECTIVE_BY_ID = {
   ch_003: "Something on this host is reading memory it shouldn't be able to read. Security tooling reads that same memory space too, for legitimate reasons — your rule needs to catch only the unauthorized access.",
   ch_004: "A PowerShell process executed with its payload deliberately obscured from casual review. PowerShell is used constantly for legitimate administration — the obfuscation itself is the signal you're after.",
   ch_005: "Web traffic includes attempts to manipulate a backend database through crafted input. Real user traffic and attack traffic both hit the same endpoints — the payload shape is what separates them.",
+  ch_006: "A new Windows service was installed with a binary path in user-writeable directories or invoking encoded PowerShell. Software updates and diagnostic services also create new services — your rule must isolate malicious persistence while ignoring benign automation.",
+  ch_007: "An interactive desktop logon was detected for a service account. Service accounts routinely authenticate for background tasks and service logons, but interactive logons indicate credential abuse unless tied to emergency breakglass or staging console procedures.",
 };
 
 const getDiffColor = (diff) => {
