@@ -27,7 +27,11 @@ BENIGN_TOTAL = TOTAL_ENTRIES - MALICIOUS_TOTAL              # 140
 PTH_MALICIOUS = MALICIOUS_TOTAL // 2               # 30 — Challenge 1
 TASK_MALICIOUS = MALICIOUS_TOTAL - PTH_MALICIOUS   # 30 — Challenge 2
 
-# Split benign across the 4 event types so no single type dominates
+# Split benign across the 4 event types so no single type dominates.
+# Noise categories (legacy/breakglass NTLM, maintenance/backup tasks) are
+# themselves EventID 4624/4698 entries, so they're carved out of those
+# pools below rather than added on top — otherwise the benign budget
+# overflows and starves BENIGN_7045 down to (or past) zero.
 BENIGN_4624 = round(BENIGN_TOTAL * 0.35)    # normal logons
 BENIGN_4698 = round(BENIGN_TOTAL * 0.30)    # routine scheduled tasks
 BENIGN_4625 = round(BENIGN_TOTAL * 0.20)    # failed logon padding
@@ -35,6 +39,8 @@ LEGACY_NTLM_NOISE = 8  # legitimate-but-NTLM logons that a naive PtH rule would 
 BREAKGLASS_NTLM_NOISE = 4 # legitimate break-glass NTLM network logons
 MAINTENANCE_TASK_NOISE = 5 # legitimate IT automation scripts
 BACKUP_TASK_NOISE = 5 # legitimate backup task using rundll32
+BENIGN_4624 -= LEGACY_NTLM_NOISE + BREAKGLASS_NTLM_NOISE
+BENIGN_4698 -= MAINTENANCE_TASK_NOISE + BACKUP_TASK_NOISE
 BENIGN_7045 = BENIGN_TOTAL - BENIGN_4624 - BENIGN_4698 - BENIGN_4625 - LEGACY_NTLM_NOISE - BREAKGLASS_NTLM_NOISE - MAINTENANCE_TASK_NOISE - BACKUP_TASK_NOISE
 
 OUT_DIR = "output/datasets"
