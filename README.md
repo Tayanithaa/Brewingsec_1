@@ -6,6 +6,14 @@ This repository contains the **Sigma Rule Builder & Live Validation Engine**, a 
 
 ---
 
+## Tech Stack
+
+- **Backend:** Python, FastAPI 0.139, pySigma 1.4 (+ `pysigma-backend-splunk`, `pysigma-backend-kusto` for the transpiler), Uvicorn, Pydantic, python-jose (JWT), PyYAML
+- **Frontend:** React 18, Monaco Editor (`@monaco-editor/react`), Tailwind CSS, Vite, Axios, Recharts
+- **Deployment:** Docker, docker-compose
+
+---
+
 ## Setup & Deployment
 
 ### Quick Start (Production Build)
