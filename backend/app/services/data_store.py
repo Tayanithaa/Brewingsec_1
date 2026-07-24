@@ -51,7 +51,7 @@ def list_datasets() -> list[dict]:
 
 def _describe(name: str) -> str:
     return {
-        "windows_security": "Windows Security Event Log — logons, scheduled tasks, service installs (Event IDs 4624, 4625, 4698, 7045).",
+        "windows_security": "Windows Security Event Log — logons, process creation, scheduled tasks, service installs (Event IDs 4624, 4625, 4688, 4698, 7045).",
         "sysmon": "Sysmon Event Log — process creation, process access, registry changes (Event IDs 1, 10, 13).",
         "web_access": "Web server access log — HTTP requests including SQL injection attempts.",
     }.get(name, "Synthetic log dataset.")

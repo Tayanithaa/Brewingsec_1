@@ -77,7 +77,7 @@ flowchart LR
     end
 
     subgraph DATA["📁 Data Layer (JSON)"]
-        WS[windows_security.json\nEvent IDs 4624·4625·4698]
+        WS[windows_security.json\nEvent IDs 4624·4625·4688·4698·7045]
         SY[sysmon.json\nEvent IDs 1·10·13]
         WA[web_access.json\nHTTP access logs]
         CB[challenge_definitions.json + reference_rules.json\n5 challenges; reference rules never leave the backend]

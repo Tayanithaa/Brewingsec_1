@@ -1,7 +1,11 @@
 """
 Generates windows_security.json — synthetic Windows Security Event Log dataset.
-Covers Event IDs: 4624 (logon), 4625 (failed logon), 4698 (scheduled task creation), 7045 (service install)
+Covers Event IDs: 4624 (logon), 4625 (failed logon), 4688 (process creation),
+4698 (scheduled task creation), 7045 (service install) — the full set the
+official PS requires this dataset to represent.
 Feeds Challenge 1 (Pass-the-Hash) and Challenge 2 (Scheduled Task Creation).
+4688 is benign-only noise: no challenge targets it for scoring, it exists
+purely so the dataset covers all 5 required event types.
 
 Usage: python3 generate_windows_security.py
 Output: ./output/datasets/windows_security.json
@@ -39,9 +43,10 @@ LEGACY_NTLM_NOISE = 8  # legitimate-but-NTLM logons that a naive PtH rule would 
 BREAKGLASS_NTLM_NOISE = 4 # legitimate break-glass NTLM network logons
 MAINTENANCE_TASK_NOISE = 5 # legitimate IT automation scripts
 BACKUP_TASK_NOISE = 5 # legitimate backup task using rundll32
+PROCESS_CREATION_NOISE = 8  # benign EventID 4688 — not targeted by any challenge, added only for event-type coverage
 BENIGN_4624 -= LEGACY_NTLM_NOISE + BREAKGLASS_NTLM_NOISE
 BENIGN_4698 -= MAINTENANCE_TASK_NOISE + BACKUP_TASK_NOISE
-BENIGN_7045 = BENIGN_TOTAL - BENIGN_4624 - BENIGN_4698 - BENIGN_4625 - LEGACY_NTLM_NOISE - BREAKGLASS_NTLM_NOISE - MAINTENANCE_TASK_NOISE - BACKUP_TASK_NOISE
+BENIGN_7045 = BENIGN_TOTAL - BENIGN_4624 - BENIGN_4698 - BENIGN_4625 - LEGACY_NTLM_NOISE - BREAKGLASS_NTLM_NOISE - MAINTENANCE_TASK_NOISE - BACKUP_TASK_NOISE - PROCESS_CREATION_NOISE
 
 OUT_DIR = "output/datasets"
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -226,9 +231,39 @@ def add_backup_task_noise(count):
 
 
 # ------------------------------------------------------------------
-# Padding — 4625 (failed logon) and 7045 (service install) for realism.
-# Always benign; these events aren't targeted by either challenge.
+# Padding — 4625 (failed logon), 4688 (process creation), and 7045
+# (service install) for realism/spec coverage. Always benign; none of
+# these three event types is targeted by either challenge.
 # ------------------------------------------------------------------
+BENIGN_PROCESSES = [
+    ("C:\\Windows\\System32\\svchost.exe", "C:\\Windows\\System32\\services.exe", "svchost.exe -k netsvcs"),
+    ("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", "C:\\Windows\\explorer.exe", "chrome.exe"),
+    ("C:\\Windows\\System32\\taskhostw.exe", "C:\\Windows\\System32\\svchost.exe", "taskhostw.exe"),
+    ("C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE", "C:\\Windows\\explorer.exe", "WINWORD.EXE /n"),
+    ("C:\\Windows\\System32\\backgroundTaskHost.exe", "C:\\Windows\\System32\\svchost.exe", "backgroundTaskHost.exe -ServerName:App"),
+]
+
+
+def add_4688_padding(count):
+    """Routine process creation — normal application launches and scheduled
+    system processes. Not tied to any challenge's ground truth; exists so
+    the dataset covers all 5 event types the official PS requires."""
+    for _ in range(count):
+        new_image, parent_image, command_line = random.choice(BENIGN_PROCESSES)
+        entries.append({
+            "EventID": 4688,
+            "TimeCreated": ts(next_idx()),
+            "Computer": random.choice(HOSTS),
+            "SubjectUserName": random.choice(USERS),
+            "NewProcessName": new_image,
+            "ParentProcessName": parent_image,
+            "CommandLine": command_line,
+            "malicious": False,
+            "attack_type": None
+        })
+
+
+
 def add_4625_padding(count):
     for _ in range(count):
         entries.append({
@@ -270,6 +305,7 @@ add_task_benign(BENIGN_4698)
 add_maintenance_task_noise(MAINTENANCE_TASK_NOISE)
 add_backup_task_noise(BACKUP_TASK_NOISE)
 add_4625_padding(BENIGN_4625)
+add_4688_padding(PROCESS_CREATION_NOISE)
 add_7045_padding(BENIGN_7045)
 
 random.shuffle(entries)
@@ -286,4 +322,6 @@ malicious_count = sum(1 for e in entries if e["malicious"])
 print(f"windows_security.json: {total} entries")
 print(f"  malicious: {malicious_count} ({malicious_count/total*100:.1f}%)")
 print(f"  benign:    {total - malicious_count} ({(total - malicious_count)/total*100:.1f}%)")
+from collections import Counter
+print(f"  EventID breakdown: {dict(sorted(Counter(e['EventID'] for e in entries).items()))}")
 print(f"Written to {out_path}")
